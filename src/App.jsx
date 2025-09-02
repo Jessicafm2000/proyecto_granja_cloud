@@ -1,35 +1,40 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState } from 'react';
+//import './App.css'
+import {Button, Layout, theme} from 'antd';
+import {MenuUnfoldOutlined, MenuFoldOutlined} from '@ant-design/icons'
+import Logo from './components/Logo';
+import MenuList from './components/MenuList';
+import ToggleThemeButton from './components/ToggleThemeButtom';
 
+const {Header, Sider} = Layout;
 function App() {
-  const [count, setCount] = useState(0)
+  const [darkTheme, setDarkTheme] = useState(true)
+  const [collapsed, setCollapsed] = useState(false)
+
+  const toggleTheme = () =>{
+    setDarkTheme(!darkTheme);
+  };
+
+  const{
+    token: {colorBgContainer},
+  }=theme.useToken()
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+      <Layout>
+        <Sider collapsed={collapsed} collapsible trigger={null} theme={darkTheme ? 'dark' : 'light'} 
+        className='sidebar'>
+          <Logo/>
+          <MenuList darkTheme = {darkTheme}/>
+          <ToggleThemeButton darkTheme={darkTheme}
+          toggleTheme={toggleTheme}/>
+        </Sider>
+        <Layout>
+          <Header style={{padding: 0, background:colorBgContainer}}>
+            <Button type='text'  className= 'toggle' onClick={()=>setCollapsed(!collapsed)} icon={collapsed ? <MenuUnfoldOutlined/> : <MenuFoldOutlined/> }/>
+          </Header>
+        </Layout>
+      </Layout>
+  );
+ }
 
 export default App
