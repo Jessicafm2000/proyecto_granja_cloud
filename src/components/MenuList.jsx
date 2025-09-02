@@ -17,25 +17,9 @@ const MenuList = ({darkTheme}) => {
             <Menu.Item key="/animals" icon={<AppstoreAddOutlined/>}>
                 <Link to="/animals">Animales</Link>
             </Menu.Item>
-            <Menu.SubMenu key="tasks"
-            icon={<BarsOutlined/>}
-            title="Tasks"
-            >
-            <Menu.Item key="/tasks/task-1">
-                <Link to="/tasks/task-1">Task-1</Link>
+            <Menu.Item key="/production" icon={<AppstoreOutlined />}>
+                 <Link to="/production">Producción</Link>
             </Menu.Item>
-            <Menu.Item key="/tasks/task-2">
-                <Link to="/tasks/task-2">Task-2</Link>
-            </Menu.Item>
-            <Menu.SubMenu key='subtasks' title='Subtasks'>
-                <Menu.Item key="/tasks/subtask-1">
-                    <Link to="/tasks/subtasks/1">subtask 1</Link>
-                </Menu.Item>
-                <Menu.Item key="/tasks/subtask-2">
-                     <Link to="/tasks/subtasks/2">subtask 2</Link>
-                </Menu.Item>
-            </Menu.SubMenu>
-            </Menu.SubMenu>
             <Menu.Item key="/crops" icon={<AppstoreOutlined />}>
                  <Link to="/crops">Cultivos</Link>
             </Menu.Item>

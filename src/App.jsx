@@ -16,6 +16,7 @@ import Task1 from './pages/Task1';
 import Task2 from './pages/Task2';
 import Subtask1 from './pages/Subtask1';
 import Subtask2 from './pages/Subtask2';
+import Production from './pages/Production'
 
 
 const {Header, Sider , Content} = Layout;
@@ -56,6 +57,7 @@ function App() {
               <Route path='/tasks/task-2' element={<Task2 />} />
               <Route path='/tasks/subtasks/1' element={<Subtask1 />} />
               <Route path='/tasks/subtasks/2' element={<Subtask2 />} />
+              <Route path='/production' element={<Production />} />
             </Routes>
           </Content>
         </Layout>
