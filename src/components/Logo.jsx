@@ -1,11 +1,12 @@
 import React from "react";
-import {FireFilled} from '@ant-design/icons';
+import { CloudOutlined } from '@ant-design/icons';
+import './Logo.css'; // Asegúrate de crear este archivo
 
 const Logo = () => {
     return (
         <div className="logo">
             <div className="logo-icon">
-            <FireFilled/>
+                <CloudOutlined className="cloud-icon" />
             </div>
         </div>
     );

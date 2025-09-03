@@ -1,0 +1,26 @@
+.logo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100px; /* Ajusta según necesites */
+}
+
+.cloud-icon {
+    font-size: 64px;
+    color: #1890ff;
+    animation: float 3s ease-in-out infinite;
+    transition: transform 0.3s;
+}
+
+/* Animación de flotación */
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-15px); }
+    100% { transform: translateY(0px); }
+}
+
+/* Efecto hover para que crezca un poquito */
+.cloud-icon:hover {
+    transform: scale(1.2);
+    color: #40a9ff; /* Se aclara al pasar el mouse */
+}
