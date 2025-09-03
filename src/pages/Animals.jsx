@@ -1,76 +1,58 @@
 //export default function Animals(){ return <h2>Animales</h2>; }
+// src/pages/Animals.jsx
 import { Card, Row, Col, Input, Button, Modal, Form, Select } from "antd";
 import { SearchOutlined, PlusOutlined, DeleteOutlined, EditOutlined } from "@ant-design/icons";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getAnimals, addAnimal, updateAnimal, deleteAnimal } from "../api";
+
+// Para ids temporales en frontend si DynamoDB no devuelve
+const generateTempId = () => "_" + Math.random().toString(36).substr(2, 9);
 
 export default function Animals() {
-  const initialAnimals = [
-    { id: 1, name: "Ana", type: "Vaca", nacimiento: "2020-06-15" },
-    { id: 2, name: "Beatriz", type: "Vaca", nacimiento: "2021-04-10" },
-    { id: 3, name: "Carla", type: "Gallina", nacimiento: "2022-01-20" },
-    { id: 4, name: "Diana", type: "Gallina", nacimiento: "2022-03-15" },
-    { id: 5, name: "Elena", type: "Cerdo", nacimiento: "2021-09-05" },
-    { id: 6, name: "Fernanda", type: "Cerdo", nacimiento: "2021-11-12" },
-    { id: 7, name: "Gabriela", type: "Vaca", nacimiento: "2020-08-22" },
-    { id: 8, name: "Helena", type: "Gallina", nacimiento: "2022-05-18" },
-    { id: 9, name: "Isabel", type: "Cerdo", nacimiento: "2021-12-01" },
-    { id: 10, name: "Juliana", type: "Vaca", nacimiento: "2020-10-30" },
-    { id: 11, name: "Karla", type: "Gallina", nacimiento: "2022-07-09" },
-    { id: 12, name: "Laura", type: "Cerdo", nacimiento: "2022-02-14" },
-  ];
-
   const animalImages = {
     Vaca: "./animals/vaca.png",
     Gallina: "./animals/gallina.png",
     Cerdo: "./animals/cerdo.png",
   };
 
-  const [animals, setAnimals] = useState(
-    initialAnimals.map(a => ({ ...a, img: animalImages[a.type] }))
-  );
-  const [hovered, setHovered] = useState(null);
+  const [animals, setAnimals] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState(null);
-  const [filterAge, setFilterAge] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAnimal, setEditingAnimal] = useState(null);
   const [form] = Form.useForm();
 
-  const calculateAge = (birthDate) => {
-    const today = new Date();
-    const birth = new Date(birthDate);
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-      age--;
+  // Cargar animales desde la API
+  const loadAnimals = async () => {
+    try {
+      const data = await getAnimals();
+
+      const formatted = data.map((a) => ({
+        id: a.id?.N || generateTempId(), // Si no trae id de DynamoDB, le pongo uno temporal
+        name: a.nombre?.S || a.nombre,
+        type: a.tipo?.S || a.tipo,
+        edad: a.edad?.N || a.edad,
+        img: animalImages[a.tipo?.S || a.tipo] || "./animals/default.png",
+      }));
+
+      setAnimals(formatted);
+    } catch (error) {
+      console.error("Error cargando animales:", error);
     }
-    return age;
   };
 
-  const maxAge = Math.max(...animals.map(a => calculateAge(a.nacimiento)));
+  useEffect(() => {
+    loadAnimals();
+  }, []);
 
-  const ageRanges = [
-    { label: "<1 año", min: 0, max: 0 },
-    { label: "1-2 años", min: 1, max: 2 },
-    { label: "2-3 años", min: 2, max: 3 },
-    ...(maxAge > 3 ? [{ label: ">3 años", min: 4, max: maxAge }] : [])
-  ];
-
-  const filteredAnimals = animals.filter(animal => {
-    const age = calculateAge(animal.nacimiento);
-    const ageMatch = filterAge ? age >= filterAge.min && age <= filterAge.max : true;
-    const typeMatch = filterType ? animal.type === filterType : true;
-    const nameMatch = animal.name.toLowerCase().includes(searchTerm.toLowerCase());
-    return ageMatch && typeMatch && nameMatch;
-  });
-
+  // Modal
   const showModal = (animal = null) => {
     if (animal) {
       setEditingAnimal(animal);
       form.setFieldsValue({
         name: animal.name,
         type: animal.type,
-        nacimiento: animal.nacimiento,
+        edad: animal.edad,
       });
     } else {
       setEditingAnimal(null);
@@ -85,31 +67,37 @@ export default function Animals() {
     form.resetFields();
   };
 
-  const handleAddOrEditAnimal = (values) => {
-    if (editingAnimal) {
-      setAnimals(
-        animals.map(a =>
-          a.id === editingAnimal.id
-            ? { ...a, name: values.name, type: values.type, nacimiento: values.nacimiento, img: animalImages[values.type] }
-            : a
-        )
-      );
-    } else {
-      const newAnimal = {
-        id: animals.length + 1,
-        name: values.name,
-        type: values.type,
-        nacimiento: values.nacimiento,
-        img: animalImages[values.type],
-      };
-      setAnimals([newAnimal, ...animals]);
+  // Agregar o editar animal
+  const handleAddOrEditAnimal = async (values) => {
+    try {
+      if (editingAnimal) {
+        await updateAnimal(editingAnimal.id, values.name, values.type, values.edad);
+      } else {
+        await addAnimal(values.name, values.type, values.edad);
+      }
+      await loadAnimals();
+      handleCancel();
+    } catch (error) {
+      console.error("Error al agregar/editar animal:", error);
     }
-    handleCancel();
   };
 
-  const handleDeleteAnimal = (id) => {
-    setAnimals(animals.filter(animal => animal.id !== id));
+  // Eliminar animal
+  const handleDeleteAnimal = async (id) => {
+    try {
+      await deleteAnimal(id);
+      setAnimals((prev) => prev.filter((a) => a.id !== id));
+    } catch (error) {
+      console.error("Error al eliminar animal:", error);
+    }
   };
+
+  // Filtros
+  const filteredAnimals = animals.filter((animal) => {
+    const typeMatch = filterType ? animal.type === filterType : true;
+    const nameMatch = animal.name?.toLowerCase().includes(searchTerm.toLowerCase());
+    return typeMatch && nameMatch;
+  });
 
   return (
     <div style={{ padding: "20px" }}>
@@ -126,20 +114,12 @@ export default function Animals() {
           placeholder="Filtrar por tipo"
           style={{ width: "150px" }}
           allowClear
-          onChange={value => setFilterType(value)}
+          onChange={(value) => setFilterType(value)}
         >
-          {Object.keys(animalImages).map(type => (
-            <Select.Option key={type} value={type}>{type}</Select.Option>
-          ))}
-        </Select>
-        <Select
-          placeholder="Filtrar por edad"
-          style={{ width: "150px" }}
-          allowClear
-          onChange={value => setFilterAge(ageRanges.find(r => r.label === value))}
-        >
-          {ageRanges.map(range => (
-            <Select.Option key={range.label} value={range.label}>{range.label}</Select.Option>
+          {Object.keys(animalImages).map((type) => (
+            <Select.Option key={type} value={type}>
+              {type}
+            </Select.Option>
           ))}
         </Select>
         <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>
@@ -153,48 +133,34 @@ export default function Animals() {
           <Col key={animal.id} xs={24} sm={12} md={8} lg={6}>
             <Card
               hoverable
-              onMouseEnter={() => setHovered(animal.id)}
-              onMouseLeave={() => setHovered(null)}
               style={{
-                backgroundColor: hovered === animal.id ? "#e6f7ff" : "white",
-                transform: hovered === animal.id ? "scale(1.05)" : "scale(1)",
                 transition: "all 0.3s ease",
                 position: "relative",
               }}
+              extra={
+                <>
+                  <EditOutlined
+                    style={{ marginRight: 8, cursor: "pointer" }}
+                    onClick={() => showModal(animal)}
+                  />
+                  <DeleteOutlined
+                    style={{ color: "red", cursor: "pointer" }}
+                    onClick={() => handleDeleteAnimal(animal.id)}
+                  />
+                </>
+              }
             >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start" }}>
+              <div style={{ display: "flex", alignItems: "center" }}>
                 <img
                   alt={animal.name}
                   src={animal.img}
-                  style={{
-                    width: "60px",
-                    height: "60px",
-                    objectFit: "contain",
-                    marginRight: "10px",
-                  }}
+                  style={{ width: 60, height: 60, objectFit: "contain", marginRight: 10 }}
                 />
                 <div>
                   <h3 style={{ margin: 0 }}>{animal.name}</h3>
                   <p style={{ margin: 0, color: "#666" }}>{animal.type}</p>
-                  <p style={{ margin: 0, color: "#666" }}>
-                    Edad: {calculateAge(animal.nacimiento)} años
-                  </p>
+                  <p style={{ margin: 0, color: "#666" }}>Edad: {animal.edad} años</p>
                 </div>
-              </div>
-              <div style={{ position: "absolute", top: "10px", right: "10px", display: "flex", gap: "5px" }}>
-                <Button
-                  type="primary"
-                  danger
-                  icon={<DeleteOutlined />}
-                  size="small"
-                  onClick={() => handleDeleteAnimal(animal.id)}
-                />
-                <Button
-                  type="default"
-                  icon={<EditOutlined />}
-                  size="small"
-                  onClick={() => showModal(animal)}
-                />
               </div>
             </Card>
           </Col>
@@ -202,7 +168,12 @@ export default function Animals() {
       </Row>
 
       {/* Modal */}
-      <Modal title={editingAnimal ? "Modificar Animal" : "Agregar Animal"} open={isModalOpen} onCancel={handleCancel} footer={null}>
+      <Modal
+        title={editingAnimal ? "Modificar Animal" : "Agregar Animal"}
+        open={isModalOpen}
+        onCancel={handleCancel}
+        footer={null}
+      >
         <Form form={form} layout="vertical" onFinish={handleAddOrEditAnimal}>
           <Form.Item
             label="Nombre"
@@ -218,18 +189,20 @@ export default function Animals() {
             rules={[{ required: true, message: "Por favor selecciona el tipo" }]}
           >
             <Select placeholder="Selecciona un tipo">
-              {Object.keys(animalImages).map(type => (
-                <Select.Option key={type} value={type}>{type}</Select.Option>
+              {Object.keys(animalImages).map((type) => (
+                <Select.Option key={type} value={type}>
+                  {type}
+                </Select.Option>
               ))}
             </Select>
           </Form.Item>
 
           <Form.Item
-            label="Fecha de nacimiento"
-            name="nacimiento"
-            rules={[{ required: true, message: "Por favor ingresa la fecha" }]}
+            label="Edad"
+            name="edad"
+            rules={[{ required: true, message: "Por favor ingresa la edad" }]}
           >
-            <Input type="date" />
+            <Input type="number" min={0} />
           </Form.Item>
 
           <Form.Item>
