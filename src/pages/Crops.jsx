@@ -41,7 +41,7 @@ export default function Cultivos() {
   const [editingCrop, setEditingCrop] = useState(null);
   const [form] = Form.useForm();
 
-  // Aplicar búsqueda y filtros
+  // Filtros
   const filteredCrops = crops.filter(crop => {
     return (
       crop.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
@@ -139,7 +139,8 @@ export default function Cultivos() {
               onMouseLeave={() => setHovered(null)}
               style={{
                 backgroundColor: hovered === crop.id ? "#e6f7ff" : "white",
-                transition: "0.3s",
+                transform: hovered === crop.id ? "scale(1.05)" : "scale(1)",
+                transition: "all 0.3s ease",
                 position: "relative",
               }}
             >

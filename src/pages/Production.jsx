@@ -63,27 +63,38 @@ export default function ProduccionDiaria() {
     <div style={{ padding: 20 }}>
       {/* Card para registrar producción */}
       <Card title="Registrar Producción Diaria" style={{ marginBottom: 20 }}>
-        <Row gutter={[10, 10]} align="middle">
-          <Col>
-            <div>Fecha de producción:</div>
+        <Row gutter={[20, 20]}>
+          {/* Fecha arriba */}
+          <Col span={24}>
+            <div style={{ fontWeight: "bold", marginBottom: 5 }}>📅 Fecha de producción:</div>
             <DatePicker value={fecha} onChange={d => setFecha(d || dayjs())} />
           </Col>
 
+          {/* Campos de producción */}
           {tipos.map(t => (
-            <Col key={t.name}>
-              <div>{t.label}:</div>
+            <Col xs={24} sm={12} md={8} key={t.name}>
+              <div style={{ display: "flex", alignItems: "center", marginBottom: 5 }}>
+                <img
+                  src={animalImages[t.name]}
+                  alt={t.name}
+                  style={{ width: 30, height: 30, marginRight: 8 }}
+                />
+                <span style={{ fontWeight: "bold" }}>{t.label}:</span>
+              </div>
               <InputNumber
                 min={0}
                 value={valores[t.name]}
                 onChange={v => setValores({ ...valores, [t.name]: v })}
                 placeholder={t.label}
+                style={{ width: "100%" }}
               />
             </Col>
           ))}
 
-          <Col>
+          {/* Botón guardar */}
+          <Col span={24}>
             <Button type="primary" icon={<PlusOutlined />} onClick={guardarProduccion}>
-              Guardar
+              Guardar Producción
             </Button>
           </Col>
         </Row>

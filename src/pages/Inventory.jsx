@@ -56,6 +56,7 @@ export default function Inventory() {
 
   return (
     <div style={{ padding: "20px" }}>
+      {/* Barra de búsqueda y filtros */}
       <div style={{ marginBottom: "20px", display: "flex", gap: "10px", flexWrap: "wrap" }}>
         <Input
           placeholder="Buscar producto"
@@ -80,12 +81,14 @@ export default function Inventory() {
         </Button>
       </div>
 
+      {/* Cards de inventario */}
       <Row gutter={[16, 16]}>
         {filteredItems.map(item => (
           <Col key={item.id} xs={24} sm={12} md={8} lg={6}>
             <Card
               hoverable
-              style={{ position: "relative" }}
+              className="inventory-card"
+              style={{ position: "relative", transition: "all 0.3s ease" }}
             >
               <h3>{item.name}</h3>
               <p>Categoría: {item.category}</p>
@@ -100,6 +103,7 @@ export default function Inventory() {
         ))}
       </Row>
 
+      {/* Modal para agregar/editar */}
       <Modal title={editingItem ? "Modificar Producto" : "Agregar Producto"} open={isModalOpen} onCancel={handleCancel} footer={null}>
         <Form form={form} layout="vertical" onFinish={handleAddOrEditItem}>
           <Form.Item label="Nombre" name="name" rules={[{ required: true, message: "Ingresa el nombre" }]}>
@@ -134,6 +138,16 @@ export default function Inventory() {
           </Form.Item>
         </Form>
       </Modal>
+
+      {/* Estilos para hover */}
+      <style jsx>{`
+        .inventory-card:hover {
+          transform: scale(1.05);
+          background-color: #f0f9ff !important;
+          border-color: #40a9ff !important;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+      `}</style>
     </div>
   );
 }

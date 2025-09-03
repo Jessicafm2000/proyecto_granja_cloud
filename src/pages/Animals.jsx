@@ -47,10 +47,8 @@ export default function Animals() {
     return age;
   };
 
-  // Calculamos la edad máxima real de los animales
   const maxAge = Math.max(...animals.map(a => calculateAge(a.nacimiento)));
 
-  // Definimos rangos dinámicos solo si existen animales en esos rangos
   const ageRanges = [
     { label: "<1 año", min: 0, max: 0 },
     { label: "1-2 años", min: 1, max: 2 },
@@ -115,6 +113,7 @@ export default function Animals() {
 
   return (
     <div style={{ padding: "20px" }}>
+      {/* Filtros */}
       <div style={{ marginBottom: "20px", display: "flex", gap: "10px", flexWrap: "wrap" }}>
         <Input
           placeholder="Buscar animal por nombre"
@@ -148,6 +147,7 @@ export default function Animals() {
         </Button>
       </div>
 
+      {/* Cards */}
       <Row gutter={[16, 16]}>
         {filteredAnimals.map((animal) => (
           <Col key={animal.id} xs={24} sm={12} md={8} lg={6}>
@@ -157,7 +157,8 @@ export default function Animals() {
               onMouseLeave={() => setHovered(null)}
               style={{
                 backgroundColor: hovered === animal.id ? "#e6f7ff" : "white",
-                transition: "0.3s",
+                transform: hovered === animal.id ? "scale(1.05)" : "scale(1)",
+                transition: "all 0.3s ease",
                 position: "relative",
               }}
             >
@@ -200,6 +201,7 @@ export default function Animals() {
         ))}
       </Row>
 
+      {/* Modal */}
       <Modal title={editingAnimal ? "Modificar Animal" : "Agregar Animal"} open={isModalOpen} onCancel={handleCancel} footer={null}>
         <Form form={form} layout="vertical" onFinish={handleAddOrEditAnimal}>
           <Form.Item

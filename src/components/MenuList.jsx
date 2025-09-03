@@ -1,7 +1,7 @@
 
 //import React from "react";
 import {Menu} from 'antd';
-import {AppstoreAddOutlined, AppstoreOutlined, BarsOutlined, DiffFilled, DiffOutlined, FileDoneOutlined, HomeOutlined} from '@ant-design/icons';
+import {AppstoreAddOutlined, AppstoreOutlined, BarsOutlined, DiffFilled, DiffOutlined, FileDoneOutlined, HomeOutlined, InboxOutlined} from '@ant-design/icons';
 import { Link, useLocation } from "react-router-dom";
 
 
@@ -17,11 +17,11 @@ const MenuList = ({darkTheme}) => {
             <Menu.Item key="/animals" icon={<AppstoreAddOutlined/>}>
                 <Link to="/animals">Animales</Link>
             </Menu.Item>
-            <Menu.Item key="/production" icon={<AppstoreOutlined />}>
-                 <Link to="/production">Producción</Link>
-            </Menu.Item>
             <Menu.Item key="/crops" icon={<AppstoreOutlined />}>
                  <Link to="/crops">Cultivos</Link>
+            </Menu.Item>
+            <Menu.Item key="/production" icon={<InboxOutlined />}>
+                 <Link to="/production">Producción</Link>
             </Menu.Item>
              <Menu.Item key="/inventory" icon={<FileDoneOutlined/>}>
                 <Link to="/inventory">Inventario</Link>
