@@ -3,6 +3,7 @@ const ANIMALS_API = "https://8xqk2pb1wd.execute-api.us-east-1.amazonaws.com/dev/
 const CROPS_API = "https://8xqk2pb1wd.execute-api.us-east-1.amazonaws.com/dev/crops";
 const PRODUCTION_API = "https://8xqk2pb1wd.execute-api.us-east-1.amazonaws.com/dev/production";
 const INVENTORY_API = "https://8xqk2pb1wd.execute-api.us-east-1.amazonaws.com/dev/inventory";
+const VACCINES_API = "https://8xqk2pb1wd.execute-api.us-east-1.amazonaws.com/dev/vaccines"; // ✅ nueva
 
 // -------------------- UTIL --------------------
 async function fetchAPI(url, options = {}) {
@@ -126,4 +127,44 @@ export async function updateInventory({ id, name, category, date, quantity, unit
 export async function deleteInventory(id) {
   if (id == null) throw new Error("Falta el id para eliminar");
   return fetchAPI(`${INVENTORY_API}?id=${Number(id)}`, { method: "DELETE" });
+}
+
+// -------------------- VACUNAS --------------------
+export async function getVaccines() {
+  return fetchAPI(VACCINES_API);
+}
+
+export async function addVaccine({ animalId, vaccine, date, nextDate, status }) {
+  return fetchAPI(VACCINES_API, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      animalId: Number(animalId),
+      vaccine,
+      date,
+      nextDate,
+      status,
+    }),
+  });
+}
+
+export async function updateVaccine({ id, animalId, vaccine, date, nextDate, status }) {
+  if (id == null) throw new Error("Falta el id para actualizar");
+  return fetchAPI(VACCINES_API, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      id: Number(id),
+      animalId: Number(animalId),
+      vaccine,
+      date,
+      nextDate,
+      status,
+    }),
+  });
+}
+
+export async function deleteVaccine(id) {
+  if (id == null) throw new Error("Falta el id para eliminar");
+  return fetchAPI(`${VACCINES_API}?id=${Number(id)}`, { method: "DELETE" });
 }

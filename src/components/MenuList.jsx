@@ -12,7 +12,7 @@ const MenuList = ({darkTheme}) => {
     return(
         <Menu theme={darkTheme ? 'dark' : 'light'} mode='inline' className='menu-bar' selectedKeys={selectedKeys}>
             <Menu.Item key="/" icon={<HomeOutlined />}>
-                <Link to="/">Home</Link>
+                <Link to="/">Inicio</Link>
             </Menu.Item>
             <Menu.Item key="/animals" icon={<AppstoreAddOutlined/>}>
                 <Link to="/animals">Animales</Link>

@@ -1,25 +1,13 @@
-import { Card, Row, Col, Input, Button, Modal, Form, Select, DatePicker } from "antd";
+// src/pages/Vaccination.jsx
+import { Card, Row, Col, Input, Button, Modal, Form, Select, DatePicker, message } from "antd";
 import { SearchOutlined, PlusOutlined, DeleteOutlined, EditOutlined } from "@ant-design/icons";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import dayjs from "dayjs";
+import { getVaccines, addVaccine, updateVaccine, deleteVaccine, getAnimals } from "../api";
 
 export default function Vaccination() {
-  const animals = [
-    { id: 1, name: "Ana", type: "Vaca", img: "./animals/vaca.png" },
-    { id: 2, name: "Beatriz", type: "Vaca", img: "./animals/vaca.png" },
-    { id: 3, name: "Carla", type: "Gallina", img: "./animals/gallina.png" },
-    { id: 4, name: "Diana", type: "Gallina", img: "./animals/gallina.png" },
-    { id: 5, name: "Pedro", type: "Cerdo", img: "./animals/cerdo.png" },
-  ];
-
-  const initialRecords = [
-    { id: 1, animalId: 1, vaccine: "Fiebre Aftosa", date: "2025-08-01", nextDate: "2026-08-01", status: "Aplicada" },
-    { id: 2, animalId: 2, vaccine: "Brucelosis", date: "2025-07-20", nextDate: "2026-07-20", status: "Aplicada" },
-    { id: 3, animalId: 3, vaccine: "Gripe Aviar", date: "2025-08-10", nextDate: "2026-08-10", status: "Pendiente" },
-    { id: 4, animalId: 5, vaccine: "Peste Porcina", date: "2025-08-15", nextDate: "2026-08-15", status: "Aplicada" },
-  ];
-
-  const [records, setRecords] = useState(initialRecords);
+  const [records, setRecords] = useState([]);
+  const [animals, setAnimals] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterAnimalType, setFilterAnimalType] = useState(null);
   const [filterStatus, setFilterStatus] = useState(null);
@@ -28,16 +16,40 @@ export default function Vaccination() {
   const [editingRecord, setEditingRecord] = useState(null);
   const [form] = Form.useForm();
 
+  const vaccineOptions = ["Fiebre Aftosa", "Brucelosis", "Gripe Aviar", "Peste Porcina"];
+
+  // ---------- Cargar animales y vacunas ----------
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [animalData, vaccineData] = await Promise.all([getAnimals(), getVaccines()]);
+        // Añadimos ruta de imagen por tipo
+        const animalsWithImg = (animalData || []).map(a => ({
+          ...a,
+          img: `/animals/${a.tipo.toLowerCase()}.png`
+        }));
+        setAnimals(animalsWithImg);
+        setRecords(vaccineData || []);
+      } catch (error) {
+        console.error("Error cargando datos:", error);
+        message.error("Error cargando datos");
+      }
+    }
+    fetchData();
+  }, []);
+
+  // ---------- Filtrar registros ----------
   const filteredRecords = records.filter(record => {
     const animal = animals.find(a => a.id === record.animalId);
     return (
       record.vaccine.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      (filterAnimalType ? animal?.type === filterAnimalType : true) &&
+      (filterAnimalType ? animal?.tipo === filterAnimalType : true) &&
       (filterStatus ? record.status === filterStatus : true) &&
       (filterVaccine ? record.vaccine === filterVaccine : true)
     );
   });
 
+  // ---------- Modal ----------
   const showModal = (record = null) => {
     if (record) {
       setEditingRecord(record);
@@ -61,28 +73,50 @@ export default function Vaccination() {
     form.resetFields();
   };
 
-  const handleAddOrEditRecord = (values) => {
-    const newRecord = {
-      id: editingRecord ? editingRecord.id : records.length + 1,
-      animalId: values.animalId,
-      vaccine: values.vaccine,
-      date: values.date.format("YYYY-MM-DD"),
-      nextDate: values.nextDate ? values.nextDate.format("YYYY-MM-DD") : null,
-      status: values.status,
-    };
-    if (editingRecord) {
-      setRecords(records.map(r => r.id === editingRecord.id ? newRecord : r));
-    } else {
-      setRecords([newRecord, ...records]);
+  // ---------- Agregar / Editar ----------
+  const handleAddOrEditRecord = async (values) => {
+    try {
+      if (editingRecord) {
+        await updateVaccine({
+          id: editingRecord.id,
+          animalId: values.animalId,
+          vaccine: values.vaccine,
+          date: values.date.format("YYYY-MM-DD"),
+          nextDate: values.nextDate ? values.nextDate.format("YYYY-MM-DD") : null,
+          status: values.status,
+        });
+        message.success("Vacuna modificada correctamente");
+      } else {
+        await addVaccine({
+          animalId: values.animalId,
+          vaccine: values.vaccine,
+          date: values.date.format("YYYY-MM-DD"),
+          nextDate: values.nextDate ? values.nextDate.format("YYYY-MM-DD") : null,
+          status: values.status,
+        });
+        message.success("Vacuna agregada correctamente");
+      }
+      const updatedRecords = await getVaccines();
+      setRecords(updatedRecords || []);
+      handleCancel();
+    } catch (error) {
+      console.error("Error al agregar/editar vacuna:", error);
+      message.error("Error al agregar/editar vacuna");
     }
-    handleCancel();
   };
 
-  const handleDeleteRecord = (id) => {
-    setRecords(records.filter(r => r.id !== id));
+  // ---------- Eliminar ----------
+  const handleDeleteRecord = async (id) => {
+    try {
+      await deleteVaccine(id);
+      message.success("Vacuna eliminada correctamente");
+      const updatedRecords = await getVaccines();
+      setRecords(updatedRecords || []);
+    } catch (error) {
+      console.error("Error al eliminar vacuna:", error);
+      message.error("Error al eliminar vacuna");
+    }
   };
-
-  const vaccineOptions = ["Fiebre Aftosa", "Brucelosis", "Gripe Aviar", "Peste Porcina"];
 
   return (
     <div style={{ padding: "20px" }}>
@@ -101,9 +135,11 @@ export default function Vaccination() {
           allowClear
           onChange={value => setFilterAnimalType(value)}
         >
-          <Select.Option value="Vaca">Vaca 🐄</Select.Option>
-          <Select.Option value="Gallina">Gallina 🐔</Select.Option>
-          <Select.Option value="Cerdo">Cerdo 🐖</Select.Option>
+          {["Vaca", "Gallina", "Cerdo"].map(type => (
+            <Select.Option key={type} value={type}>
+              {type}
+            </Select.Option>
+          ))}
         </Select>
         <Select
           placeholder="Filtrar por estado"
@@ -132,7 +168,7 @@ export default function Vaccination() {
       {/* Tarjetas de registros */}
       <Row gutter={[16, 16]}>
         {filteredRecords.map(record => {
-          const animal = animals.find(a => a.id === record.animalId) || { name: "Desconocido", img: "./animals/default.png", type: "N/A" };
+          const animal = animals.find(a => a.id === record.animalId) || { nombre: "Desconocido", tipo: "N/A", img: "/animals/default.png" };
           return (
             <Col key={record.id} xs={24} sm={12} md={8} lg={6}>
               <Card
@@ -142,13 +178,13 @@ export default function Vaccination() {
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                   <img
-                    src={animal.img || "./animals/default.png"}
-                    alt={animal.name}
+                    src={animal.img}
+                    alt={animal.nombre}
                     style={{ width: "50px", height: "50px", objectFit: "contain" }}
                   />
                   <div>
                     <h3>{record.vaccine}</h3>
-                    <p>Animal: {animal.name} ({animal.type})</p>
+                    <p>Animal: {animal.nombre} ({animal.tipo})</p>
                     <p>Fecha: {record.date}</p>
                     <p>Próxima dosis: {record.nextDate || "-"}</p>
                     <p>Estado: {record.status}</p>
@@ -175,7 +211,7 @@ export default function Vaccination() {
           <Form.Item label="Animal" name="animalId" rules={[{ required: true, message: "Selecciona un animal" }]}>
             <Select placeholder="Selecciona un animal">
               {animals.map(a => (
-                <Select.Option key={a.id} value={a.id}>{a.name} ({a.type})</Select.Option>
+                <Select.Option key={a.id} value={a.id}>{a.nombre} ({a.tipo})</Select.Option>
               ))}
             </Select>
           </Form.Item>
