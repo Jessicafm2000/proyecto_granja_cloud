@@ -2,25 +2,25 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100px; /* Ajusta según necesites */
+    height: 180px; /* Más alto para que el logo tenga espacio */
 }
 
 .cloud-icon {
-    font-size: 64px;
-    color: #1890ff;
+    width: 180px;   /* Tamaño del logo */
+    height: auto;   /* Mantiene proporción */
     animation: float 3s ease-in-out infinite;
-    transition: transform 0.3s;
+    transition: transform 0.3s, filter 0.3s;
 }
 
 /* Animación de flotación */
 @keyframes float {
     0% { transform: translateY(0px); }
-    50% { transform: translateY(-15px); }
+    30% { transform: translateY(-15px); } /* Sube 15px */
     100% { transform: translateY(0px); }
 }
 
-/* Efecto hover para que crezca un poquito */
+/* Efecto hover */
 .cloud-icon:hover {
     transform: scale(1.2);
-    color: #40a9ff; /* Se aclara al pasar el mouse */
+    filter: brightness(1.2);
 }

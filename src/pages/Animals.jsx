@@ -8,9 +8,9 @@ const generateTempId = () => "_" + Math.random().toString(36).substr(2, 9);
 
 export default function Animals() {
   const animalImages = {
-    Vaca: "./animals/vaca.png",
-    Gallina: "./animals/gallina.png",
-    Cerdo: "./animals/cerdo.png",
+    Vaca: "https://granjacloud.s3.us-east-1.amazonaws.com/animals/vaca.png",
+    Gallina: "https://granjacloud.s3.us-east-1.amazonaws.com/animals/gallina.png",
+    Cerdo: "https://granjacloud.s3.us-east-1.amazonaws.com/animals/cerdo.png",
   };
 
   const [animals, setAnimals] = useState([]);

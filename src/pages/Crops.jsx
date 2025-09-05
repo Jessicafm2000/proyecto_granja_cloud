@@ -5,10 +5,10 @@ import { useState, useEffect } from "react";
 
 // Mapea los cultivos a imágenes
 const cropImages = {
-  Maíz: "./crops/maiz.png",
-  Trigo: "./crops/trigo.png",
-  Tomate: "./crops/tomate.png",
-  Papa: "./crops/papa.png",
+  Maíz: "https://granjacloud.s3.us-east-1.amazonaws.com/crops/maiz.png",
+  Trigo: "https://granjacloud.s3.us-east-1.amazonaws.com/crops/trigo.png",
+  Tomate: "https://granjacloud.s3.us-east-1.amazonaws.com/crops/tomate.png",
+  Papa: "https://granjacloud.s3.us-east-1.amazonaws.com/crops/papa.png",
   Default: "./crops/default.png",
 };
 
