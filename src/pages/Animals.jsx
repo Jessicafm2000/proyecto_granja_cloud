@@ -64,26 +64,25 @@ export default function Animals() {
 
   const handleAddOrEditAnimal = async (values) => {
     try {
-      let result;
-
       if (editingAnimal) {
         // Actualizar animal
-        result = await updateAnimal({
+        await updateAnimal({
           id: Number(editingAnimal.id),
           nombre: values.name,
           tipo: values.type,
           edad: Number(values.edad),
         });
+        message.success("Animal modificado correctamente");
       } else {
         // Agregar animal
-        result = await addAnimal({
+        await addAnimal({
           nombre: values.name,
           tipo: values.type,
           edad: Number(values.edad),
         });
+        message.success("Animal agregado correctamente");
       }
 
-      if (result?.message) message.success(result.message);
       await loadAnimals();
       handleCancel();
     } catch (error) {
@@ -94,9 +93,9 @@ export default function Animals() {
 
   const handleDeleteAnimal = async (id) => {
     try {
-      const result = await deleteAnimal(id);
-      if (result?.message) message.success(result.message);
+      await deleteAnimal(id);
       setAnimals((prev) => prev.filter((a) => a.id !== id));
+      message.success("Animal eliminado correctamente");
     } catch (error) {
       console.error("Error al eliminar animal:", error);
       message.error("Error al eliminar animal");

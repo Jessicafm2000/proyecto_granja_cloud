@@ -94,12 +94,13 @@ export default function Crops() {
         setCrops((prev) =>
           prev.map((c) => (c.id === editingCrop.id ? { ...c, ...values, img: image } : c))
         );
+        message.success("Cultivo modificado correctamente");
       } else {
         const newId = result.id;
         setCrops((prev) => [{ id: newId, ...values, img: image }, ...prev]);
+        message.success("Cultivo agregado correctamente");
       }
 
-      message.success(result.message);
       handleCancel();
     } catch (err) {
       console.error(err);
@@ -115,7 +116,7 @@ export default function Crops() {
       if (!res.ok) throw new Error(result.error || "Error eliminando cultivo");
 
       setCrops((prev) => prev.filter((c) => c.id !== id));
-      message.success(result.message);
+      message.success("Cultivo eliminado correctamente");
     } catch (err) {
       console.error(err);
       message.error(err.message);

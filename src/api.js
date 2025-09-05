@@ -3,7 +3,7 @@ const ANIMALS_API = "https://8xqk2pb1wd.execute-api.us-east-1.amazonaws.com/dev/
 const CROPS_API = "https://8xqk2pb1wd.execute-api.us-east-1.amazonaws.com/dev/crops";
 const PRODUCTION_API = "https://8xqk2pb1wd.execute-api.us-east-1.amazonaws.com/dev/production";
 const INVENTORY_API = "https://8xqk2pb1wd.execute-api.us-east-1.amazonaws.com/dev/inventory";
-const VACCINES_API = "https://8xqk2pb1wd.execute-api.us-east-1.amazonaws.com/dev/vaccines"; // ✅ nueva
+const VACCINES_API = "https://8xqk2pb1wd.execute-api.us-east-1.amazonaws.com/dev/vaccines"; 
 
 // -------------------- UTIL --------------------
 async function fetchAPI(url, options = {}) {

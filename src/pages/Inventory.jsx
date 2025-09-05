@@ -1,4 +1,4 @@
-import { Card, Row, Col, Input, Button, Modal, Form, Select, InputNumber } from "antd";
+import { Card, Row, Col, Input, Button, Modal, Form, Select, InputNumber, message } from "antd";
 import { SearchOutlined, PlusOutlined, DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { useState, useEffect } from "react";
 import { getInventory, addInventory, updateInventory, deleteInventory } from "../api";
@@ -49,14 +49,15 @@ export default function Inventory() {
       // 🔹 Actualizar
       const res = await updateInventory({ id: editingItem.id, ...values });
       if (res) {
-        // 🔹 Reemplazar objeto completo con el devuelto por API
         setItems(items.map(i => (i.id === editingItem.id ? res : i)));
+        message.success("Producto modificado correctamente");
       }
     } else {
       // 🔹 Agregar
       const res = await addInventory(values);
       if (res) {
         setItems([res, ...items]);
+        message.success("Producto agregado correctamente");
       }
     }
     handleCancel();
@@ -66,6 +67,7 @@ export default function Inventory() {
     const res = await deleteInventory(id);
     if (res) {
       setItems(items.filter(i => i.id !== id));
+      message.success("Producto eliminado correctamente");
     }
   };
 
