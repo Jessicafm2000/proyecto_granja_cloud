@@ -1,26 +1,30 @@
-//export default function Inventory(){ return <h2>Inventario</h2>; }
 import { Card, Row, Col, Input, Button, Modal, Form, Select, InputNumber } from "antd";
 import { SearchOutlined, PlusOutlined, DeleteOutlined, EditOutlined } from "@ant-design/icons";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getInventory, addInventory, updateInventory, deleteInventory } from "../api";
 
 export default function Inventory() {
-  const initialItems = [
-    { id: 1, name: "Alimento Vaca", quantity: 50, unit: "kg", category: "Alimento", date: "2025-08-01" },
-    { id: 2, name: "Abono Orgánico", quantity: 20, unit: "bolsa", category: "Fertilizante", date: "2025-08-05" },
-    { id: 3, name: "Antibiótico Cerdo", quantity: 10, unit: "litros", category: "Medicamento", date: "2025-07-28" },
-    { id: 4, name: "Fungicida Tomate", quantity: 5, unit: "litros", category: "Fertilizante", date: "2025-08-02" },
-  ];
-
-  const [items, setItems] = useState(initialItems);
+  const [items, setItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [form] = Form.useForm();
 
-  const filteredItems = items.filter(item => 
-    item.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    (filterCategory ? item.category === filterCategory : true)
+  // 🔹 Cargar inventario al inicio
+  useEffect(() => {
+    fetchInventory();
+  }, []);
+
+  const fetchInventory = async () => {
+    const data = await getInventory();
+    setItems(data);
+  };
+
+  const filteredItems = items.filter(
+    item =>
+      item.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+      (filterCategory ? item.category === filterCategory : true)
   );
 
   const showModal = (item = null) => {
@@ -40,18 +44,29 @@ export default function Inventory() {
     form.resetFields();
   };
 
-  const handleAddOrEditItem = (values) => {
+  const handleAddOrEditItem = async (values) => {
     if (editingItem) {
-      setItems(items.map(i => i.id === editingItem.id ? { ...values, id: i.id } : i));
+      // 🔹 Actualizar
+      const res = await updateInventory({ id: editingItem.id, ...values });
+      if (res) {
+        // 🔹 Reemplazar objeto completo con el devuelto por API
+        setItems(items.map(i => (i.id === editingItem.id ? res : i)));
+      }
     } else {
-      const newItem = { id: items.length + 1, ...values };
-      setItems([newItem, ...items]);
+      // 🔹 Agregar
+      const res = await addInventory(values);
+      if (res) {
+        setItems([res, ...items]);
+      }
     }
     handleCancel();
   };
 
-  const handleDeleteItem = (id) => {
-    setItems(items.filter(i => i.id !== id));
+  const handleDeleteItem = async (id) => {
+    const res = await deleteInventory(id);
+    if (res) {
+      setItems(items.filter(i => i.id !== id));
+    }
   };
 
   return (
@@ -95,8 +110,19 @@ export default function Inventory() {
               <p>Cantidad: {item.quantity} {item.unit}</p>
               <p>Fecha de ingreso: {item.date}</p>
               <div style={{ position: "absolute", top: "10px", right: "10px", display: "flex", gap: "5px" }}>
-                <Button type="primary" danger icon={<DeleteOutlined />} size="small" onClick={() => handleDeleteItem(item.id)} />
-                <Button type="default" icon={<EditOutlined />} size="small" onClick={() => showModal(item)} />
+                <Button
+                  type="primary"
+                  danger
+                  icon={<DeleteOutlined />}
+                  size="small"
+                  onClick={() => handleDeleteItem(item.id)}
+                />
+                <Button
+                  type="default"
+                  icon={<EditOutlined />}
+                  size="small"
+                  onClick={() => showModal(item)}
+                />
               </div>
             </Card>
           </Col>
@@ -104,7 +130,12 @@ export default function Inventory() {
       </Row>
 
       {/* Modal para agregar/editar */}
-      <Modal title={editingItem ? "Modificar Producto" : "Agregar Producto"} open={isModalOpen} onCancel={handleCancel} footer={null}>
+      <Modal
+        title={editingItem ? "Modificar Producto" : "Agregar Producto"}
+        open={isModalOpen}
+        onCancel={handleCancel}
+        footer={null}
+      >
         <Form form={form} layout="vertical" onFinish={handleAddOrEditItem}>
           <Form.Item label="Nombre" name="name" rules={[{ required: true, message: "Ingresa el nombre" }]}>
             <Input />

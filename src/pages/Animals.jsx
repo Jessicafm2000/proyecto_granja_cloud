@@ -1,11 +1,9 @@
-//export default function Animals(){ return <h2>Animales</h2>; }
 // src/pages/Animals.jsx
-import { Card, Row, Col, Input, Button, Modal, Form, Select } from "antd";
+import { Card, Row, Col, Input, Button, Modal, Form, Select, message } from "antd";
 import { SearchOutlined, PlusOutlined, DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { useState, useEffect } from "react";
 import { getAnimals, addAnimal, updateAnimal, deleteAnimal } from "../api";
 
-// Para ids temporales en frontend si DynamoDB no devuelve
 const generateTempId = () => "_" + Math.random().toString(36).substr(2, 9);
 
 export default function Animals() {
@@ -22,22 +20,20 @@ export default function Animals() {
   const [editingAnimal, setEditingAnimal] = useState(null);
   const [form] = Form.useForm();
 
-  // Cargar animales desde la API
   const loadAnimals = async () => {
     try {
       const data = await getAnimals();
-
       const formatted = data.map((a) => ({
-        id: a.id?.N || generateTempId(), // Si no trae id de DynamoDB, le pongo uno temporal
-        name: a.nombre?.S || a.nombre,
-        type: a.tipo?.S || a.tipo,
-        edad: a.edad?.N || a.edad,
-        img: animalImages[a.tipo?.S || a.tipo] || "./animals/default.png",
+        id: a.id ?? generateTempId(),
+        name: a.nombre ?? a.name,
+        type: a.tipo ?? a.type,
+        edad: a.edad ?? a.age,
+        img: animalImages[a.tipo ?? a.type] || "./animals/default.png",
       }));
-
       setAnimals(formatted);
     } catch (error) {
       console.error("Error cargando animales:", error);
+      message.error("Error cargando animales");
     }
   };
 
@@ -45,7 +41,6 @@ export default function Animals() {
     loadAnimals();
   }, []);
 
-  // Modal
   const showModal = (animal = null) => {
     if (animal) {
       setEditingAnimal(animal);
@@ -67,32 +62,47 @@ export default function Animals() {
     form.resetFields();
   };
 
-  // Agregar o editar animal
   const handleAddOrEditAnimal = async (values) => {
     try {
+      let result;
+
       if (editingAnimal) {
-        await updateAnimal(editingAnimal.id, values.name, values.type, values.edad);
+        // Actualizar animal
+        result = await updateAnimal({
+          id: Number(editingAnimal.id),
+          nombre: values.name,
+          tipo: values.type,
+          edad: Number(values.edad),
+        });
       } else {
-        await addAnimal(values.name, values.type, values.edad);
+        // Agregar animal
+        result = await addAnimal({
+          nombre: values.name,
+          tipo: values.type,
+          edad: Number(values.edad),
+        });
       }
+
+      if (result?.message) message.success(result.message);
       await loadAnimals();
       handleCancel();
     } catch (error) {
       console.error("Error al agregar/editar animal:", error);
+      message.error("Error al agregar/editar animal");
     }
   };
 
-  // Eliminar animal
   const handleDeleteAnimal = async (id) => {
     try {
-      await deleteAnimal(id);
+      const result = await deleteAnimal(id);
+      if (result?.message) message.success(result.message);
       setAnimals((prev) => prev.filter((a) => a.id !== id));
     } catch (error) {
       console.error("Error al eliminar animal:", error);
+      message.error("Error al eliminar animal");
     }
   };
 
-  // Filtros
   const filteredAnimals = animals.filter((animal) => {
     const typeMatch = filterType ? animal.type === filterType : true;
     const nameMatch = animal.name?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -133,10 +143,7 @@ export default function Animals() {
           <Col key={animal.id} xs={24} sm={12} md={8} lg={6}>
             <Card
               hoverable
-              style={{
-                transition: "all 0.3s ease",
-                position: "relative",
-              }}
+              style={{ transition: "all 0.3s ease", position: "relative" }}
               extra={
                 <>
                   <EditOutlined

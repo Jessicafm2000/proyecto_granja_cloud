@@ -1,71 +1,129 @@
-const API_URL = "https://8xqk2pb1wd.execute-api.us-east-1.amazonaws.com/dev/animals"; // Tu URL de API Gateway
+// -------------------- CONFIG --------------------
+const ANIMALS_API = "https://8xqk2pb1wd.execute-api.us-east-1.amazonaws.com/dev/animals";
+const CROPS_API = "https://8xqk2pb1wd.execute-api.us-east-1.amazonaws.com/dev/crops";
+const PRODUCTION_API = "https://8xqk2pb1wd.execute-api.us-east-1.amazonaws.com/dev/production";
+const INVENTORY_API = "https://8xqk2pb1wd.execute-api.us-east-1.amazonaws.com/dev/inventory";
 
-// ---------------- GET: obtener todos los animales ----------------
+// -------------------- UTIL --------------------
+async function fetchAPI(url, options = {}) {
+  try {
+    const res = await fetch(url, options);
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || "Error en la solicitud");
+    }
+    if (res.status === 204 || res.headers.get("content-length") === "0") return { message: "Eliminado" };
+    return await res.json();
+  } catch (error) {
+    console.error("fetchAPI:", error);
+    return null;
+  }
+}
+
+// -------------------- ANIMALES --------------------
 export async function getAnimals() {
-  try {
-    const res = await fetch(API_URL);
-    if (!res.ok) throw new Error("Error al obtener animales");
-    const data = await res.json();
-    return data;
-  } catch (error) {
-    console.error("getAnimals:", error);
-    return [];
-  }
+  return fetchAPI(ANIMALS_API);
 }
 
-// ---------------- POST: agregar un animal ----------------
-export async function addAnimal(nombre, tipo, edad) {
-  try {
-    const body = {
-      nombre,
-      tipo,
-      edad: Number(edad), // aseguramos que edad se mande como número
-    };
-
-    const res = await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-
-    if (!res.ok) throw new Error("Error al agregar animal");
-    return await res.json(); // <- devuelve { message, id }
-  } catch (error) {
-    console.error("addAnimal:", error);
-    return null;
-  }
+export async function addAnimal({ nombre, tipo, edad }) {
+  return fetchAPI(ANIMALS_API, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nombre, tipo, edad: Number(edad) }),
+  });
 }
 
-// ---------------- PUT: actualizar un animal ----------------
-export async function updateAnimal(id, nombre, tipo, edad) {
-  try {
-    const body = { id, nombre, tipo, edad: Number(edad) };
-
-    const res = await fetch(API_URL, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-
-    if (!res.ok) throw new Error("Error al actualizar animal");
-    return await res.json();
-  } catch (error) {
-    console.error("updateAnimal:", error);
-    return null;
-  }
+export async function updateAnimal({ id, nombre, tipo, edad }) {
+  if (id == null) throw new Error("Falta el id para actualizar");
+  return fetchAPI(ANIMALS_API, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id: Number(id), nombre, tipo, edad: Number(edad) }),
+  });
 }
 
-// ---------------- DELETE: eliminar un animal ----------------
 export async function deleteAnimal(id) {
-  try {
-    // DELETE usa query param, no body
-    const res = await fetch(`${API_URL}?id=${id}`, { method: "DELETE" });
-
-    if (!res.ok) throw new Error("Error al eliminar animal");
-    return await res.json();
-  } catch (error) {
-    console.error("deleteAnimal:", error);
-    return null;
-  }
+  if (id == null) throw new Error("Falta el id para eliminar");
+  return fetchAPI(`${ANIMALS_API}?id=${Number(id)}`, { method: "DELETE" });
 }
 
+// -------------------- CULTIVOS --------------------
+export async function getCrops() {
+  return fetchAPI(CROPS_API);
+}
+
+export async function addCrop({ name, estado, siembra, hectareas }) {
+  return fetchAPI(CROPS_API, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, estado, siembra, hectareas: Number(hectareas) }),
+  });
+}
+
+export async function updateCrop({ id, name, estado, siembra, hectareas }) {
+  if (id == null) throw new Error("Falta el id para actualizar");
+  return fetchAPI(CROPS_API, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id: Number(id), name, estado, siembra, hectareas: Number(hectareas) }),
+  });
+}
+
+export async function deleteCrop(id) {
+  if (id == null) throw new Error("Falta el id para eliminar");
+  return fetchAPI(`${CROPS_API}?id=${Number(id)}`, { method: "DELETE" });
+}
+
+// -------------------- PRODUCCIÓN --------------------
+export async function getProduction() {
+  return fetchAPI(PRODUCTION_API);
+}
+
+export async function addProduction({ date, milk, eggs, pigsSold }) {
+  return fetchAPI(PRODUCTION_API, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ date, milk: Number(milk), eggs: Number(eggs), pigsSold: Number(pigsSold) }),
+  });
+}
+
+export async function updateProduction({ id, date, milk, eggs, pigsSold }) {
+  if (id == null) throw new Error("Falta el id para actualizar");
+  return fetchAPI(PRODUCTION_API, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id: Number(id), date, milk: Number(milk), eggs: Number(eggs), pigsSold: Number(pigsSold) }),
+  });
+}
+
+export async function deleteProduction(id) {
+  if (id == null) throw new Error("Falta el id para eliminar");
+  return fetchAPI(`${PRODUCTION_API}?id=${Number(id)}`, { method: "DELETE" });
+}
+
+// -------------------- INVENTARIO --------------------
+export async function getInventory() {
+  return fetchAPI(INVENTORY_API);
+}
+
+export async function addInventory({ name, category, date, quantity, unit }) {
+  return fetchAPI(INVENTORY_API, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, category, date, quantity: Number(quantity), unit }),
+  });
+}
+
+export async function updateInventory({ id, name, category, date, quantity, unit }) {
+  if (id == null) throw new Error("Falta el id para actualizar");
+  return fetchAPI(INVENTORY_API, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id: Number(id), name, category, date, quantity: Number(quantity), unit }),
+  });
+}
+
+export async function deleteInventory(id) {
+  if (id == null) throw new Error("Falta el id para eliminar");
+  return fetchAPI(`${INVENTORY_API}?id=${Number(id)}`, { method: "DELETE" });
+}
