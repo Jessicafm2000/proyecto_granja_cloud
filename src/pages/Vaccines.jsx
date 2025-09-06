@@ -18,16 +18,20 @@ export default function Vaccination() {
 
   const vaccineOptions = ["Fiebre Aftosa", "Brucelosis", "Gripe Aviar", "Peste Porcina"];
 
+  // URL base del bucket S3
+  const S3_URL = "https://granjacloud.s3.us-east-1.amazonaws.com";
+
   // ---------- Cargar animales y vacunas ----------
   useEffect(() => {
     async function fetchData() {
       try {
         const [animalData, vaccineData] = await Promise.all([getAnimals(), getVaccines()]);
-        // Añadimos ruta de imagen por tipo
+
         const animalsWithImg = (animalData || []).map(a => ({
           ...a,
-          img: `/animals/${a.tipo.toLowerCase()}.png`
+          img: `${S3_URL}/animals/${a.tipo.toLowerCase()}.png`
         }));
+
         setAnimals(animalsWithImg);
         setRecords(vaccineData || []);
       } catch (error) {
@@ -168,7 +172,11 @@ export default function Vaccination() {
       {/* Tarjetas de registros */}
       <Row gutter={[16, 16]}>
         {filteredRecords.map(record => {
-          const animal = animals.find(a => a.id === record.animalId) || { nombre: "Desconocido", tipo: "N/A", img: "/animals/default.png" };
+          const animal = animals.find(a => a.id === record.animalId) || { 
+            nombre: "Desconocido", 
+            tipo: "N/A", 
+            img: `${S3_URL}/animals/default.png`
+          };
           return (
             <Col key={record.id} xs={24} sm={12} md={8} lg={6}>
               <Card
