@@ -19,7 +19,7 @@ export default function Vaccination() {
   const vaccineOptions = ["Fiebre Aftosa", "Brucelosis", "Gripe Aviar", "Peste Porcina"];
 
   // URL base del bucket S3
-  const S3_URL = "https://granjacloud.s3.us-east-1.amazonaws.com";
+  const S3_URL = "https://d2trfafuwnq9hu.cloudfront.net";
 
   // ---------- Cargar animales y vacunas ----------
   useEffect(() => {
