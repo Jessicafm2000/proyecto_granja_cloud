@@ -16,7 +16,6 @@ import { PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import { useState, useEffect } from "react";
 import dayjs from "dayjs";
 
-// Importamos funciones de api.js
 import {
   getProduction,
   addProduction,
@@ -24,14 +23,12 @@ import {
   deleteProduction,
 } from "../api";
 
-// Imágenes de los animales
 const animalImages = {
   Vaca: "https://d2trfafuwnq9hu.cloudfront.net/animals/vaca.png",
   Gallina: "https://d2trfafuwnq9hu.cloudfront.net/animals/gallina.png",
   Cerdo: "https://d2trfafuwnq9hu.cloudfront.net/animals/cerdo.png",
 };
 
-// Tipos de producción
 const tipos = [
   { name: "milk", label: "Litros de leche (L)", img: "Vaca" },
   { name: "eggs", label: "Cantidad de huevos", img: "Gallina" },
@@ -48,42 +45,67 @@ export default function ProduccionDiaria() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form] = Form.useForm();
 
-  // ================= PAGINACIÓN (DynamoDB) =================
-  const [lastKey, setLastKey] = useState(null); // clave de la siguiente página
-  const [prevKeys, setPrevKeys] = useState([]); // historial para retroceder
+  // ================= PAGINACIÓN =================
   const pageSize = 5;
+  const [historyKeys, setHistoryKeys] = useState([null]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [lastKey, setLastKey] = useState(null);
+  const [totalPages, setTotalPages] = useState(1);
 
   // ================= API CALLS =================
-  const fetchRecords = async (key = null) => {
-    try {
-      const { items, lastKey: newLastKey } = await getProduction(pageSize, key);
+  const fetchRecords = async (direction = "current") => {
+    let keyToLoad = null;
+    if (direction === "next") {
+      if (!lastKey) return;
+      keyToLoad = lastKey;
+    } else if (direction === "prev") {
+      if (currentIndex === 0) return;
+      keyToLoad = historyKeys[currentIndex - 1];
+    }
 
-      if (Array.isArray(items)) {
-        setRecords(
-          items.map((r) => ({
-            ...r,
-            id: String(r.id),
-            milk: Number(r.milk) || 0,
-            eggs: Number(r.eggs) || 0,
-            pigsSold: Number(r.pigsSold) || 0,
-          }))
-        );
+    try {
+      const data = await getProduction(pageSize, keyToLoad);
+      if (!data) return;
+
+      const formatted = (data.items || []).map((r) => ({
+        ...r,
+        id: String(r.id),
+        milk: Number(r.milk) || 0,
+        eggs: Number(r.eggs) || 0,
+        pigsSold: Number(r.pigsSold) || 0,
+      }));
+
+      setRecords(formatted);
+      setLastKey(data.lastKey || null);
+
+      // Actualizar historial e índice
+      if (direction === "next") {
+        const newHistory = [...historyKeys.slice(0, currentIndex + 1), keyToLoad];
+        setHistoryKeys(newHistory);
+        setCurrentIndex((prev) => prev + 1);
+      } else if (direction === "prev") {
+        setCurrentIndex((prev) => prev - 1);
       } else {
-        setRecords([]);
+        setHistoryKeys([null]);
+        setCurrentIndex(0);
       }
 
-      setLastKey(newLastKey || null);
+      // totalPages basado en totalCount real
+      if (data.totalCount != null) {
+        setTotalPages(Math.ceil(data.totalCount / pageSize));
+      } else {
+        // fallback: usa páginas conocidas
+        setTotalPages(historyKeys.length + (data.lastKey ? 1 : 1));
+      }
     } catch (err) {
       console.error("fetchRecords:", err);
       message.error("Error al cargar la producción");
     }
   };
 
-  // Guardar producción
   const guardarProduccion = async () => {
     const dateKey = fecha.format("YYYY-MM-DD");
 
-    // validar duplicado en la página actual
     const existe = records.some((r) => r.date === dateKey);
     if (existe) {
       message.warning("Ya existe producción para esta fecha");
@@ -101,7 +123,7 @@ export default function ProduccionDiaria() {
       const result = await addProduction(payload);
       if (result && !result.error) {
         message.success("Producción guardada");
-        fetchRecords(); // recargar desde primera página
+        fetchRecords("current");
         setValores({ milk: 0, eggs: 0, pigsSold: 0 });
       } else {
         message.error(result?.error || "Error al guardar producción");
@@ -112,7 +134,6 @@ export default function ProduccionDiaria() {
     }
   };
 
-  // Editar producción
   const handleSaveEdit = async () => {
     try {
       const values = await form.validateFields();
@@ -127,7 +148,7 @@ export default function ProduccionDiaria() {
       const result = await updateProduction(updated);
       if (result && !result.error) {
         message.success("Producción actualizada");
-        fetchRecords(prevKeys[prevKeys.length - 1] || null); // recargar la página actual
+        fetchRecords("current");
         setIsModalOpen(false);
         setEditingRecord(null);
       } else {
@@ -139,13 +160,12 @@ export default function ProduccionDiaria() {
     }
   };
 
-  // Eliminar producción
   const eliminarProduccionRecord = async (id) => {
     try {
       const result = await deleteProduction(id);
       if (result) {
         message.success("Registro eliminado");
-        fetchRecords(prevKeys[prevKeys.length - 1] || null);
+        fetchRecords("current");
       } else {
         message.error("Error al eliminar");
       }
@@ -211,7 +231,6 @@ export default function ProduccionDiaria() {
     },
   ];
 
-  // ================= RENDER =================
   return (
     <div style={{ padding: 20 }}>
       <Card title="Registrar Producción Diaria" style={{ marginBottom: 20 }}>
@@ -251,26 +270,14 @@ export default function ProduccionDiaria() {
 
         <Table dataSource={filteredRecords} columns={columns} pagination={false} rowKey="id" />
 
-        {/* Botones de paginación DynamoDB */}
-        <div style={{ marginTop: 16, display: "flex", justifyContent: "center", gap: 10 }}>
-          <Button
-            disabled={prevKeys.length === 0}
-            onClick={() => {
-              const newPrev = [...prevKeys];
-              const prevKey = newPrev.pop();
-              setPrevKeys(newPrev);
-              fetchRecords(prevKey || null);
-            }}
-          >
+        <div style={{ marginTop: 16, display: "flex", justifyContent: "center", gap: 10, alignItems: "center" }}>
+          <Button disabled={currentIndex === 0} onClick={() => fetchRecords("prev")}>
             Anterior
           </Button>
-          <Button
-            disabled={!lastKey}
-            onClick={() => {
-              setPrevKeys([...prevKeys, lastKey]);
-              fetchRecords(lastKey);
-            }}
-          >
+
+          <span>Página {currentIndex + 1}</span>
+
+          <Button disabled={!lastKey} onClick={() => fetchRecords("next")}>
             Siguiente
           </Button>
         </div>
@@ -279,14 +286,13 @@ export default function ProduccionDiaria() {
       <Modal
         title="Modificar Producción"
         open={isModalOpen}
-        onOk={handleSaveEdit}
         onCancel={() => setIsModalOpen(false)}
+        onOk={handleSaveEdit}
         okText="Guardar"
-        cancelText="Cancelar"
       >
         <Form form={form} layout="vertical">
           {tipos.map((t) => (
-            <Form.Item key={t.name} label={t.label} name={t.name} rules={[{ required: true }]}>
+            <Form.Item key={t.name} label={t.label} name={t.name} rules={[{ required: true, message: "Ingresa un valor" }]}>
               <InputNumber min={0} style={{ width: "100%" }} />
             </Form.Item>
           ))}

@@ -15,6 +15,7 @@ const cropImages = {
 export default function Crops() {
   const cropOptions = ["Maíz", "Trigo", "Tomate", "Papa"];
   const estadoOptions = ["Semilla", "Creciendo", "Cosecha"];
+  const limit = 12; // cultivos por página
 
   const [crops, setCrops] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -25,13 +26,26 @@ export default function Crops() {
   const [form] = Form.useForm();
 
   // --- PAGINACIÓN ---
+  const [historyKeys, setHistoryKeys] = useState([null]); // historial de lastKeys
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [lastKey, setLastKey] = useState(null);
-  const [prevKeys, setPrevKeys] = useState([]);
-  const [hasMore, setHasMore] = useState(true);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const loadCrops = async (startKey = null, isNext = false, isPrev = false) => {
+  const loadCrops = async (direction = "current") => {
+    let keyToLoad = null;
+
+    if (direction === "next") {
+      if (!lastKey) return;
+      keyToLoad = lastKey;
+    } else if (direction === "prev") {
+      if (currentIndex === 0) return;
+      keyToLoad = historyKeys[currentIndex - 1];
+    } else {
+      keyToLoad = null;
+    }
+
     try {
-      const data = await getCrops(startKey);
+      const data = await getCrops(limit, keyToLoad);
       if (!data) return;
 
       const formatted = data.items.map((c) => ({
@@ -45,12 +59,24 @@ export default function Crops() {
 
       setCrops(formatted);
       setLastKey(data.lastKey || null);
-      setHasMore(!!data.lastKey);
 
-      if (isNext && startKey) {
-        setPrevKeys((prev) => [...prev, startKey]);
-      } else if (isPrev) {
-        setPrevKeys((prev) => prev.slice(0, -1));
+      // Actualizar historial e índice correctamente
+      if (direction === "next") {
+        const newHistory = [...historyKeys.slice(0, currentIndex + 1), keyToLoad];
+        setHistoryKeys(newHistory);
+        setCurrentIndex((prev) => prev + 1);
+      } else if (direction === "prev") {
+        setCurrentIndex((prev) => prev - 1);
+      } else {
+        setHistoryKeys([null]);
+        setCurrentIndex(0);
+      }
+
+      // actualizar totalPages
+      if (data.totalCount) {
+        setTotalPages(Math.ceil(data.totalCount / limit));
+      } else {
+        setTotalPages(historyKeys.length + (data.lastKey ? 1 : 0));
       }
     } catch (error) {
       console.error("Error cargando cultivos:", error);
@@ -94,7 +120,7 @@ export default function Crops() {
         message.success("Cultivo agregado correctamente");
       }
 
-      await loadCrops(); // refrescar lista desde inicio
+      await loadCrops("current");
       handleCancel();
     } catch (error) {
       console.error("Error al agregar/editar cultivo:", error);
@@ -193,14 +219,14 @@ export default function Crops() {
       </Row>
 
       {/* Botones de paginación */}
-      <div style={{ textAlign: "center", marginTop: 20, display: "flex", justifyContent: "center", gap: "10px" }}>
-        <Button
-          disabled={prevKeys.length === 0}
-          onClick={() => loadCrops(prevKeys[prevKeys.length - 1], false, true)}
-        >
+      <div style={{ textAlign: "center", marginTop: 20, display: "flex", justifyContent: "center", gap: "10px", alignItems: "center" }}>
+        <Button disabled={currentIndex === 0} onClick={() => loadCrops("prev")}>
           Anterior
         </Button>
-        <Button disabled={!hasMore} onClick={() => loadCrops(lastKey, true, false)}>
+
+        <span>Página {currentIndex + 1}</span>
+
+        <Button disabled={!lastKey} onClick={() => loadCrops("next")}>
           Siguiente
         </Button>
       </div>

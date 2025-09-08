@@ -6,7 +6,7 @@ import { getAnimals, getProduction, getVaccines, getCrops, getInventory } from "
 export default function Home() {
   const [selectedCard, setSelectedCard] = useState(null);
 
-  // Estados de las estadísticas
+  // Estados de estadísticas
   const [totalAnimales, setTotalAnimales] = useState(0);
   const [totalLeche, setTotalLeche] = useState(0);
   const [totalHuevos, setTotalHuevos] = useState(0);
@@ -19,31 +19,41 @@ export default function Home() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const animals = await getAnimals();
-        setTotalAnimales(animals?.length || 0);
+        // Animales
+        const animalsRes = await getAnimals(); // obtiene paginación por defecto
+        setTotalAnimales(animalsRes?.totalCount || 0);
 
-        const production = await getProduction();
-        setTotalLeche(production?.reduce((sum, p) => sum + Number(p.milk || 0), 0));
-        setTotalHuevos(production?.reduce((sum, p) => sum + Number(p.eggs || 0), 0));
-        setPigsSold(production?.reduce((sum, p) => sum + Number(p.pigsSold || 0), 0));
+        // Producción
+        const productionRes = await getProduction();
+        const production = productionRes?.items || [];
+        setTotalLeche(production.reduce((sum, p) => sum + Number(p.milk || 0), 0));
+        setTotalHuevos(production.reduce((sum, p) => sum + Number(p.eggs || 0), 0));
+        setPigsSold(production.reduce((sum, p) => sum + Number(p.pigsSold || 0), 0));
 
-        const vaccines = await getVaccines();
-        setVacunasPendientes(vaccines?.filter(v => v.status === "Pendiente").length || 0);
-        setVacunasAplicadas(vaccines?.filter(v => v.status === "Aplicada").length || 0);
+        // Vacunas
+        const vaccinesRes = await getVaccines();
+        const vaccines = vaccinesRes?.items || [];
+        setVacunasPendientes(vaccines.filter(v => v.status?.toLowerCase() === "pendiente").length);
+        setVacunasAplicadas(vaccines.filter(v => v.status?.toLowerCase() === "aplicada").length);
 
-        const crops = await getCrops();
-        setTotalCultivos(crops?.length || 0);
+        // Cultivos
+        const cropsRes = await getCrops();
+        setTotalCultivos(cropsRes?.totalCount || 0);
 
-        const inventory = await getInventory();
-        if (inventory?.length) {
+        // Inventario
+        const inventoryRes = await getInventory();
+        const inventory = inventoryRes?.items || [];
+        if (inventory.length) {
           const disponibles = inventory.filter(i => Number(i.quantity) > 0).length;
           const porcentaje = Math.round((disponibles / inventory.length) * 100);
           setInventarioDisponible(`${porcentaje}%`);
         }
+
       } catch (error) {
         console.error("Error cargando dashboard:", error);
       }
     }
+
     fetchData();
   }, []);
 

@@ -3,7 +3,7 @@ const ANIMALS_API = "https://8xqk2pb1wd.execute-api.us-east-1.amazonaws.com/dev/
 const CROPS_API = "https://8xqk2pb1wd.execute-api.us-east-1.amazonaws.com/dev/crops";
 const PRODUCTION_API = "https://8xqk2pb1wd.execute-api.us-east-1.amazonaws.com/dev/production";
 const INVENTORY_API = "https://8xqk2pb1wd.execute-api.us-east-1.amazonaws.com/dev/inventory";
-const VACCINES_API = "https://8xqk2pb1wd.execute-api.us-east-1.amazonaws.com/dev/vaccines"; 
+const VACCINES_API = "https://8xqk2pb1wd.execute-api.us-east-1.amazonaws.com/dev/vaccines";
 
 // -------------------- UTIL --------------------
 async function fetchAPI(url, options = {}) {
@@ -13,7 +13,7 @@ async function fetchAPI(url, options = {}) {
       const errData = await res.json().catch(() => ({}));
       throw new Error(errData.error || "Error en la solicitud");
     }
-    if (res.status === 204 || res.headers.get("content-length") === "0") 
+    if (res.status === 204 || res.headers.get("content-length") === "0")
       return { message: "Eliminado" };
     return await res.json();
   } catch (error) {
@@ -23,10 +23,33 @@ async function fetchAPI(url, options = {}) {
 }
 
 // -------------------- ANIMALES --------------------
-export async function getAnimals(limit = 10, lastKey = null) {
+export async function getAnimals(limit = 100, lastKey = null) {
   let url = `${ANIMALS_API}?limit=${limit}`;
   if (lastKey) url += `&lastKey=${lastKey}`;
-  return fetchAPI(url);
+  const data = await fetchAPI(url);
+
+  if (!data) return { items: [], lastKey: null, totalCount: 0 };
+
+  if (Array.isArray(data)) {
+    return {
+      items: data,
+      lastKey: data.length === limit ? data[data.length - 1].id : null,
+      totalCount: data.totalCount || data.length,
+    };
+  }
+
+  return {
+    items: data.items || [],
+    lastKey: data.lastKey || null,
+    totalCount: data.totalCount || (data.items ? data.items.length : 0),
+  };
+}
+
+export async function getAllAnimals() {
+  const data = await fetchAPI(ANIMALS_API);
+  if (!data) return [];
+  if (Array.isArray(data)) return data;
+  return data.items || [];
 }
 
 export async function addAnimal({ nombre, tipo, edad }) {
@@ -52,10 +75,26 @@ export async function deleteAnimal(id) {
 }
 
 // -------------------- CULTIVOS --------------------
-export async function getCrops(limit = 10, lastKey = null) {
+export async function getCrops(limit = 100, lastKey = null) {
   let url = `${CROPS_API}?limit=${limit}`;
   if (lastKey) url += `&lastKey=${lastKey}`;
-  return fetchAPI(url);
+  const data = await fetchAPI(url);
+
+  if (!data) return { items: [], lastKey: null, totalCount: 0 };
+
+  if (Array.isArray(data)) {
+    return {
+      items: data,
+      lastKey: data.length === limit ? data[data.length - 1].id : null,
+      totalCount: data.totalCount || data.length,
+    };
+  }
+
+  return {
+    items: data.items || [],
+    lastKey: data.lastKey || null,
+    totalCount: data.totalCount || (data.items ? data.items.length : 0),
+  };
 }
 
 export async function addCrop({ name, estado, siembra, hectareas }) {
@@ -81,10 +120,26 @@ export async function deleteCrop(id) {
 }
 
 // -------------------- PRODUCCIÓN --------------------
-export async function getProduction(limit = 10, lastKey = null) {
+export async function getProduction(limit = 100, lastKey = null) {
   let url = `${PRODUCTION_API}?limit=${limit}`;
   if (lastKey) url += `&lastKey=${lastKey}`;
-  return fetchAPI(url);
+  const data = await fetchAPI(url);
+
+  if (!data) return { items: [], lastKey: null, totalCount: 0 };
+
+  if (Array.isArray(data)) {
+    return {
+      items: data,
+      lastKey: data.length === limit ? data[data.length - 1].id : null,
+      totalCount: data.totalCount || data.length,
+    };
+  }
+
+  return {
+    items: data.items || [],
+    lastKey: data.lastKey || (data.items && data.items.length === limit ? data.items[data.items.length - 1].id : null),
+    totalCount: data.totalCount || (data.items ? data.items.length : 0),
+  };
 }
 
 export async function addProduction({ date, milk, eggs, pigsSold }) {
@@ -110,10 +165,26 @@ export async function deleteProduction(id) {
 }
 
 // -------------------- INVENTARIO --------------------
-export async function getInventory(limit = 10, lastKey = null) {
+export async function getInventory(limit = 100, lastKey = null) {
   let url = `${INVENTORY_API}?limit=${limit}`;
   if (lastKey) url += `&lastKey=${lastKey}`;
-  return fetchAPI(url);
+  const data = await fetchAPI(url);
+
+  if (!data) return { items: [], lastKey: null, totalCount: 0 };
+
+  if (Array.isArray(data)) {
+    return {
+      items: data,
+      lastKey: data.length === limit ? data[data.length - 1].id : null,
+      totalCount: data.totalCount || data.length,
+    };
+  }
+
+  return {
+    items: data.items || [],
+    lastKey: data.lastKey || null,
+    totalCount: data.totalCount || (data.items ? data.items.length : 0),
+  };
 }
 
 export async function addInventory({ name, category, date, quantity, unit }) {
@@ -139,29 +210,33 @@ export async function deleteInventory(id) {
 }
 
 // -------------------- VACUNAS --------------------
-export async function getVaccines(limit = 10, lastKey = null) {
+export async function getVaccines(limit = 100, lastKey = null) {
   let url = `${VACCINES_API}?limit=${limit}`;
   if (lastKey) url += `&lastKey=${lastKey}`;
   const data = await fetchAPI(url);
 
-  // 🔥 Corrección: devolver items + lastKey siempre
-  if (!data) return { items: [], lastKey: null };
-  if (Array.isArray(data)) return { items: data, lastKey: null };
-  if (data.items && Array.isArray(data.items)) return { items: data.items, lastKey: data.lastKey || null };
-  return { items: [], lastKey: null };
+  if (!data) return { items: [], lastKey: null, totalCount: 0 };
+
+  if (Array.isArray(data)) {
+    return {
+      items: data,
+      lastKey: data.length === limit ? data[data.length - 1].id : null,
+      totalCount: data.totalCount || data.length,
+    };
+  }
+
+  return {
+    items: data.items || [],
+    lastKey: data.lastKey || null,
+    totalCount: data.totalCount || (data.items ? data.items.length : 0),
+  };
 }
 
 export async function addVaccine({ animalId, vaccine, date, nextDate, status }) {
   return fetchAPI(VACCINES_API, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      animalId: Number(animalId),
-      vaccine,
-      date,
-      nextDate,
-      status,
-    }),
+    body: JSON.stringify({ animalId: Number(animalId), vaccine, date, nextDate, status }),
   });
 }
 
@@ -170,14 +245,7 @@ export async function updateVaccine({ id, animalId, vaccine, date, nextDate, sta
   return fetchAPI(VACCINES_API, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      id: Number(id),
-      animalId: Number(animalId),
-      vaccine,
-      date,
-      nextDate,
-      status,
-    }),
+    body: JSON.stringify({ id: Number(id), animalId: Number(animalId), vaccine, date, nextDate, status }),
   });
 }
 

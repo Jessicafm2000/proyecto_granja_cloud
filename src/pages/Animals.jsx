@@ -11,7 +11,10 @@ export default function Animals() {
     Vaca: "https://d2trfafuwnq9hu.cloudfront.net/animals/vaca.png",
     Gallina: "https://d2trfafuwnq9hu.cloudfront.net/animals/gallina.png",
     Cerdo: "https://d2trfafuwnq9hu.cloudfront.net/animals/cerdo.png",
+    Default: "./animals/default.png",
   };
+
+  const limit = 12; // animales por página
 
   const [animals, setAnimals] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -21,32 +24,59 @@ export default function Animals() {
   const [form] = Form.useForm();
 
   // --- PAGINACIÓN ---
+  const [historyKeys, setHistoryKeys] = useState([null]); // historial de lastKeys
+  const [currentIndex, setCurrentIndex] = useState(0); 
   const [lastKey, setLastKey] = useState(null);
-  const [prevKeys, setPrevKeys] = useState([]);
-  const [hasMore, setHasMore] = useState(true);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const loadAnimals = async (startKey = null, isNext = false, isPrev = false) => {
+  // --- CARGA DE ANIMALES ---
+  const loadAnimals = async (direction = "current") => {
+    let keyToLoad = null;
+
+    if (direction === "next") {
+      if (!lastKey) return;
+      keyToLoad = lastKey;
+    } else if (direction === "prev") {
+      if (currentIndex === 0) return;
+      keyToLoad = historyKeys[currentIndex - 1];
+    } else {
+      keyToLoad = null;
+    }
+
     try {
-      const data = await getAnimals(startKey);
+      const data = await getAnimals(limit, keyToLoad);
       if (!data) return;
 
-      const formatted = data.items.map((a) => ({
+      const formatted = data.items.map(a => ({
         id: a.id ?? generateTempId(),
         name: a.nombre ?? a.name,
         type: a.tipo ?? a.type,
         edad: a.edad ?? a.age,
-        img: animalImages[a.tipo ?? a.type] || "./animals/default.png",
+        img: animalImages[a.tipo ?? a.type] || animalImages.Default,
       }));
 
       setAnimals(formatted);
       setLastKey(data.lastKey || null);
-      setHasMore(!!data.lastKey);
 
-      if (isNext && startKey) {
-        setPrevKeys((prev) => [...prev, startKey]);
-      } else if (isPrev) {
-        setPrevKeys((prev) => prev.slice(0, -1));
+      // Actualizar historial e índice
+      if (direction === "next") {
+        const newHistory = [...historyKeys.slice(0, currentIndex + 1), keyToLoad];
+        setHistoryKeys(newHistory);
+        setCurrentIndex(prev => prev + 1);
+      } else if (direction === "prev") {
+        setCurrentIndex(prev => prev - 1);
+      } else {
+        setHistoryKeys([null]);
+        setCurrentIndex(0);
       }
+
+      // actualizar totalPages
+      if (data.totalCount) {
+        setTotalPages(Math.ceil(data.totalCount / limit));
+      } else {
+        setTotalPages(historyKeys.length + (data.lastKey ? 1 : 0));
+      }
+
     } catch (error) {
       console.error("Error cargando animales:", error);
       message.error("Error cargando animales");
@@ -57,6 +87,7 @@ export default function Animals() {
     loadAnimals();
   }, []);
 
+  // --- MODAL ---
   const showModal = (animal = null) => {
     if (animal) {
       setEditingAnimal(animal);
@@ -96,8 +127,7 @@ export default function Animals() {
         });
         message.success("Animal agregado correctamente");
       }
-
-      await loadAnimals(); // refresca desde inicio
+      await loadAnimals("current");
       handleCancel();
     } catch (error) {
       console.error("Error al agregar/editar animal:", error);
@@ -108,7 +138,7 @@ export default function Animals() {
   const handleDeleteAnimal = async (id) => {
     try {
       await deleteAnimal(id);
-      setAnimals((prev) => prev.filter((a) => a.id !== id));
+      setAnimals(prev => prev.filter(a => a.id !== id));
       message.success("Animal eliminado correctamente");
     } catch (error) {
       console.error("Error al eliminar animal:", error);
@@ -116,7 +146,7 @@ export default function Animals() {
     }
   };
 
-  const filteredAnimals = animals.filter((animal) => {
+  const filteredAnimals = animals.filter(animal => {
     const typeMatch = filterType ? animal.type === filterType : true;
     const nameMatch = animal.name?.toLowerCase().includes(searchTerm.toLowerCase());
     return typeMatch && nameMatch;
@@ -129,7 +159,7 @@ export default function Animals() {
         <Input
           placeholder="Buscar animal por nombre"
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={e => setSearchTerm(e.target.value)}
           style={{ width: "250px" }}
           prefix={<SearchOutlined />}
         />
@@ -137,12 +167,10 @@ export default function Animals() {
           placeholder="Filtrar por tipo"
           style={{ width: "150px" }}
           allowClear
-          onChange={(value) => setFilterType(value)}
+          onChange={value => setFilterType(value)}
         >
-          {Object.keys(animalImages).map((type) => (
-            <Select.Option key={type} value={type}>
-              {type}
-            </Select.Option>
+          {Object.keys(animalImages).filter(t => t !== "Default").map(type => (
+            <Select.Option key={type} value={type}>{type}</Select.Option>
           ))}
         </Select>
         <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>
@@ -152,30 +180,20 @@ export default function Animals() {
 
       {/* Cards */}
       <Row gutter={[16, 16]}>
-        {filteredAnimals.map((animal) => (
+        {filteredAnimals.map(animal => (
           <Col key={animal.id} xs={24} sm={12} md={8} lg={6}>
             <Card
               hoverable
               style={{ transition: "all 0.3s ease", position: "relative" }}
               extra={
                 <>
-                  <EditOutlined
-                    style={{ marginRight: 8, cursor: "pointer" }}
-                    onClick={() => showModal(animal)}
-                  />
-                  <DeleteOutlined
-                    style={{ color: "red", cursor: "pointer" }}
-                    onClick={() => handleDeleteAnimal(animal.id)}
-                  />
+                  <EditOutlined style={{ marginRight: 8, cursor: "pointer" }} onClick={() => showModal(animal)} />
+                  <DeleteOutlined style={{ color: "red", cursor: "pointer" }} onClick={() => handleDeleteAnimal(animal.id)} />
                 </>
               }
             >
               <div style={{ display: "flex", alignItems: "center" }}>
-                <img
-                  alt={animal.name}
-                  src={animal.img}
-                  style={{ width: 60, height: 60, objectFit: "contain", marginRight: 10 }}
-                />
+                <img alt={animal.name} src={animal.img} style={{ width: 60, height: 60, objectFit: "contain", marginRight: 10 }} />
                 <div>
                   <h3 style={{ margin: 0 }}>{animal.name}</h3>
                   <p style={{ margin: 0, color: "#666" }}>{animal.type}</p>
@@ -188,53 +206,34 @@ export default function Animals() {
       </Row>
 
       {/* Botones de paginación */}
-      <div style={{ textAlign: "center", marginTop: 20, display: "flex", justifyContent: "center", gap: "10px" }}>
-        <Button
-          disabled={prevKeys.length === 0}
-          onClick={() => loadAnimals(prevKeys[prevKeys.length - 1], false, true)}
-        >
+      <div style={{ textAlign: "center", marginTop: 20, display: "flex", justifyContent: "center", gap: "10px", alignItems: "center" }}>
+        <Button disabled={currentIndex === 0} onClick={() => loadAnimals("prev")}>
           Anterior
         </Button>
-        <Button disabled={!hasMore} onClick={() => loadAnimals(lastKey, true, false)}>
+
+        <span>Página {currentIndex + 1}</span>
+
+        <Button disabled={!lastKey} onClick={() => loadAnimals("next")}>
           Siguiente
         </Button>
       </div>
 
       {/* Modal */}
-      <Modal
-        title={editingAnimal ? "Modificar Animal" : "Agregar Animal"}
-        open={isModalOpen}
-        onCancel={handleCancel}
-        footer={null}
-      >
+      <Modal title={editingAnimal ? "Modificar Animal" : "Agregar Animal"} open={isModalOpen} onCancel={handleCancel} footer={null}>
         <Form form={form} layout="vertical" onFinish={handleAddOrEditAnimal}>
-          <Form.Item
-            label="Nombre"
-            name="name"
-            rules={[{ required: true, message: "Por favor ingresa el nombre" }]}
-          >
+          <Form.Item label="Nombre" name="name" rules={[{ required: true, message: "Por favor ingresa el nombre" }]}>
             <Input />
           </Form.Item>
 
-          <Form.Item
-            label="Tipo"
-            name="type"
-            rules={[{ required: true, message: "Por favor selecciona el tipo" }]}
-          >
+          <Form.Item label="Tipo" name="type" rules={[{ required: true, message: "Por favor selecciona el tipo" }]}>
             <Select placeholder="Selecciona un tipo">
-              {Object.keys(animalImages).map((type) => (
-                <Select.Option key={type} value={type}>
-                  {type}
-                </Select.Option>
+              {Object.keys(animalImages).filter(t => t !== "Default").map(type => (
+                <Select.Option key={type} value={type}>{type}</Select.Option>
               ))}
             </Select>
           </Form.Item>
 
-          <Form.Item
-            label="Edad"
-            name="edad"
-            rules={[{ required: true, message: "Por favor ingresa la edad" }]}
-          >
+          <Form.Item label="Edad" name="edad" rules={[{ required: true, message: "Por favor ingresa la edad" }]}>
             <Input type="number" min={0} />
           </Form.Item>
 
