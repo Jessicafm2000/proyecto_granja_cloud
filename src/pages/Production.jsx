@@ -16,7 +16,7 @@ import { PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import { useState, useEffect } from "react";
 import dayjs from "dayjs";
 
-// 👇 Importamos funciones de api.js
+// Importamos funciones de api.js
 import {
   getProduction,
   addProduction,
@@ -48,11 +48,31 @@ export default function ProduccionDiaria() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form] = Form.useForm();
 
+  // ================= PAGINACIÓN (DynamoDB) =================
+  const [lastKey, setLastKey] = useState(null); // clave de la siguiente página
+  const [prevKeys, setPrevKeys] = useState([]); // historial para retroceder
+  const pageSize = 5;
+
   // ================= API CALLS =================
-  const fetchRecords = async () => {
+  const fetchRecords = async (key = null) => {
     try {
-      const items = await getProduction();
-      setRecords(items);
+      const { items, lastKey: newLastKey } = await getProduction(pageSize, key);
+
+      if (Array.isArray(items)) {
+        setRecords(
+          items.map((r) => ({
+            ...r,
+            id: String(r.id),
+            milk: Number(r.milk) || 0,
+            eggs: Number(r.eggs) || 0,
+            pigsSold: Number(r.pigsSold) || 0,
+          }))
+        );
+      } else {
+        setRecords([]);
+      }
+
+      setLastKey(newLastKey || null);
     } catch (err) {
       console.error("fetchRecords:", err);
       message.error("Error al cargar la producción");
@@ -63,6 +83,7 @@ export default function ProduccionDiaria() {
   const guardarProduccion = async () => {
     const dateKey = fecha.format("YYYY-MM-DD");
 
+    // validar duplicado en la página actual
     const existe = records.some((r) => r.date === dateKey);
     if (existe) {
       message.warning("Ya existe producción para esta fecha");
@@ -70,10 +91,17 @@ export default function ProduccionDiaria() {
     }
 
     try {
-      const result = await addProduction({ date: dateKey, ...valores });
+      const payload = {
+        date: dateKey,
+        milk: Number(valores.milk) || 0,
+        eggs: Number(valores.eggs) || 0,
+        pigsSold: Number(valores.pigsSold) || 0,
+      };
+
+      const result = await addProduction(payload);
       if (result && !result.error) {
         message.success("Producción guardada");
-        fetchRecords();
+        fetchRecords(); // recargar desde primera página
         setValores({ milk: 0, eggs: 0, pigsSold: 0 });
       } else {
         message.error(result?.error || "Error al guardar producción");
@@ -88,13 +116,18 @@ export default function ProduccionDiaria() {
   const handleSaveEdit = async () => {
     try {
       const values = await form.validateFields();
-      // Mantener la fecha original como string
-      const updated = { id: editingRecord.id, date: editingRecord.date, ...values };
+      const updated = {
+        id: String(editingRecord.id),
+        date: editingRecord.date,
+        milk: Number(values.milk) || 0,
+        eggs: Number(values.eggs) || 0,
+        pigsSold: Number(values.pigsSold) || 0,
+      };
 
       const result = await updateProduction(updated);
       if (result && !result.error) {
         message.success("Producción actualizada");
-        fetchRecords();
+        fetchRecords(prevKeys[prevKeys.length - 1] || null); // recargar la página actual
         setIsModalOpen(false);
         setEditingRecord(null);
       } else {
@@ -112,7 +145,7 @@ export default function ProduccionDiaria() {
       const result = await deleteProduction(id);
       if (result) {
         message.success("Registro eliminado");
-        fetchRecords();
+        fetchRecords(prevKeys[prevKeys.length - 1] || null);
       } else {
         message.error("Error al eliminar");
       }
@@ -197,7 +230,7 @@ export default function ProduccionDiaria() {
               <InputNumber
                 min={0}
                 value={valores[t.name]}
-                onChange={(v) => setValores({ ...valores, [t.name]: v })}
+                onChange={(v) => setValores({ ...valores, [t.name]: v || 0 })}
                 style={{ width: "100%" }}
               />
             </Col>
@@ -216,7 +249,31 @@ export default function ProduccionDiaria() {
           <DatePicker placeholder="Filtrar por fecha" value={filterDate} onChange={setFilterDate} allowClear />
         </div>
 
-        <Table dataSource={filteredRecords} columns={columns} pagination={{ pageSize: 5 }} rowKey="id" />
+        <Table dataSource={filteredRecords} columns={columns} pagination={false} rowKey="id" />
+
+        {/* Botones de paginación DynamoDB */}
+        <div style={{ marginTop: 16, display: "flex", justifyContent: "center", gap: 10 }}>
+          <Button
+            disabled={prevKeys.length === 0}
+            onClick={() => {
+              const newPrev = [...prevKeys];
+              const prevKey = newPrev.pop();
+              setPrevKeys(newPrev);
+              fetchRecords(prevKey || null);
+            }}
+          >
+            Anterior
+          </Button>
+          <Button
+            disabled={!lastKey}
+            onClick={() => {
+              setPrevKeys([...prevKeys, lastKey]);
+              fetchRecords(lastKey);
+            }}
+          >
+            Siguiente
+          </Button>
+        </div>
       </Card>
 
       <Modal

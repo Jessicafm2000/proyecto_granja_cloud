@@ -20,17 +20,33 @@ export default function Animals() {
   const [editingAnimal, setEditingAnimal] = useState(null);
   const [form] = Form.useForm();
 
-  const loadAnimals = async () => {
+  // --- PAGINACIÓN ---
+  const [lastKey, setLastKey] = useState(null);
+  const [prevKeys, setPrevKeys] = useState([]);
+  const [hasMore, setHasMore] = useState(true);
+
+  const loadAnimals = async (startKey = null, isNext = false, isPrev = false) => {
     try {
-      const data = await getAnimals();
-      const formatted = data.map((a) => ({
+      const data = await getAnimals(startKey);
+      if (!data) return;
+
+      const formatted = data.items.map((a) => ({
         id: a.id ?? generateTempId(),
         name: a.nombre ?? a.name,
         type: a.tipo ?? a.type,
         edad: a.edad ?? a.age,
         img: animalImages[a.tipo ?? a.type] || "./animals/default.png",
       }));
+
       setAnimals(formatted);
+      setLastKey(data.lastKey || null);
+      setHasMore(!!data.lastKey);
+
+      if (isNext && startKey) {
+        setPrevKeys((prev) => [...prev, startKey]);
+      } else if (isPrev) {
+        setPrevKeys((prev) => prev.slice(0, -1));
+      }
     } catch (error) {
       console.error("Error cargando animales:", error);
       message.error("Error cargando animales");
@@ -65,7 +81,6 @@ export default function Animals() {
   const handleAddOrEditAnimal = async (values) => {
     try {
       if (editingAnimal) {
-        // Actualizar animal
         await updateAnimal({
           id: Number(editingAnimal.id),
           nombre: values.name,
@@ -74,7 +89,6 @@ export default function Animals() {
         });
         message.success("Animal modificado correctamente");
       } else {
-        // Agregar animal
         await addAnimal({
           nombre: values.name,
           tipo: values.type,
@@ -83,7 +97,7 @@ export default function Animals() {
         message.success("Animal agregado correctamente");
       }
 
-      await loadAnimals();
+      await loadAnimals(); // refresca desde inicio
       handleCancel();
     } catch (error) {
       console.error("Error al agregar/editar animal:", error);
@@ -172,6 +186,19 @@ export default function Animals() {
           </Col>
         ))}
       </Row>
+
+      {/* Botones de paginación */}
+      <div style={{ textAlign: "center", marginTop: 20, display: "flex", justifyContent: "center", gap: "10px" }}>
+        <Button
+          disabled={prevKeys.length === 0}
+          onClick={() => loadAnimals(prevKeys[prevKeys.length - 1], false, true)}
+        >
+          Anterior
+        </Button>
+        <Button disabled={!hasMore} onClick={() => loadAnimals(lastKey, true, false)}>
+          Siguiente
+        </Button>
+      </div>
 
       {/* Modal */}
       <Modal

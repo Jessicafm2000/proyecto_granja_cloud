@@ -1,9 +1,9 @@
-//export default function Crops(){ return <h2>Cultivos</h2>; }
+// src/pages/Crops.jsx
 import { Card, Row, Col, Input, Button, Modal, Form, Select, message } from "antd";
 import { SearchOutlined, PlusOutlined, DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { useState, useEffect } from "react";
+import { getCrops, addCrop, updateCrop, deleteCrop } from "../api";
 
-// Mapea los cultivos a imágenes
 const cropImages = {
   Maíz: "https://d2trfafuwnq9hu.cloudfront.net/crops/maiz.png",
   Trigo: "https://d2trfafuwnq9hu.cloudfront.net/crops/trigo.png",
@@ -24,25 +24,37 @@ export default function Crops() {
   const [editingCrop, setEditingCrop] = useState(null);
   const [form] = Form.useForm();
 
-  const apiUrl = "https://8xqk2pb1wd.execute-api.us-east-1.amazonaws.com/dev/crops"; // <- tu endpoint Lambda
+  // --- PAGINACIÓN ---
+  const [lastKey, setLastKey] = useState(null);
+  const [prevKeys, setPrevKeys] = useState([]);
+  const [hasMore, setHasMore] = useState(true);
 
-  // Cargar cultivos
-  const loadCrops = async () => {
+  const loadCrops = async (startKey = null, isNext = false, isPrev = false) => {
     try {
-      const res = await fetch(apiUrl);
-      const data = await res.json();
-      const formatted = data.map((c) => ({
-        id: parseInt(c.id.N || c.id),
-        name: c.name?.S || c.name,
-        estado: c.estado?.S || c.estado,
-        siembra: c.siembra?.S || c.siembra,
-        hectareas: parseInt(c.hectareas?.N || c.hectareas),
-        img: cropImages[c.name?.S || c.name] || cropImages.Default,
+      const data = await getCrops(startKey);
+      if (!data) return;
+
+      const formatted = data.items.map((c) => ({
+        id: c.id,
+        name: c.name,
+        estado: c.estado,
+        siembra: c.siembra,
+        hectareas: c.hectareas,
+        img: cropImages[c.name] || cropImages.Default,
       }));
+
       setCrops(formatted);
-    } catch (err) {
-      console.error(err);
-      message.error("Error cargando los cultivos");
+      setLastKey(data.lastKey || null);
+      setHasMore(!!data.lastKey);
+
+      if (isNext && startKey) {
+        setPrevKeys((prev) => [...prev, startKey]);
+      } else if (isPrev) {
+        setPrevKeys((prev) => prev.slice(0, -1));
+      }
+    } catch (error) {
+      console.error("Error cargando cultivos:", error);
+      message.error("Error cargando cultivos");
     }
   };
 
@@ -50,7 +62,6 @@ export default function Crops() {
     loadCrops();
   }, []);
 
-  // Modal
   const showModal = (crop = null) => {
     if (crop) {
       setEditingCrop(crop);
@@ -73,57 +84,35 @@ export default function Crops() {
     form.resetFields();
   };
 
-  // Agregar o editar
   const handleAddOrEditCrop = async (values) => {
     try {
-      const method = editingCrop ? "PUT" : "POST";
-      const body = editingCrop ? { ...values, id: editingCrop.id } : values;
-
-      const res = await fetch(apiUrl, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.error || "Error en la operación");
-
-      const image = cropImages[values.name] || cropImages.Default;
-
       if (editingCrop) {
-        setCrops((prev) =>
-          prev.map((c) => (c.id === editingCrop.id ? { ...c, ...values, img: image } : c))
-        );
+        await updateCrop({ id: editingCrop.id, ...values });
         message.success("Cultivo modificado correctamente");
       } else {
-        const newId = result.id;
-        setCrops((prev) => [{ id: newId, ...values, img: image }, ...prev]);
+        await addCrop(values);
         message.success("Cultivo agregado correctamente");
       }
 
+      await loadCrops(); // refrescar lista desde inicio
       handleCancel();
-    } catch (err) {
-      console.error(err);
-      message.error(err.message);
+    } catch (error) {
+      console.error("Error al agregar/editar cultivo:", error);
+      message.error("Error al agregar/editar cultivo");
     }
   };
 
-  // Eliminar
   const handleDeleteCrop = async (id) => {
     try {
-      const res = await fetch(`${apiUrl}?id=${id}`, { method: "DELETE" });
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.error || "Error eliminando cultivo");
-
+      await deleteCrop(id);
       setCrops((prev) => prev.filter((c) => c.id !== id));
       message.success("Cultivo eliminado correctamente");
-    } catch (err) {
-      console.error(err);
-      message.error(err.message);
+    } catch (error) {
+      console.error("Error al eliminar cultivo:", error);
+      message.error("Error al eliminar cultivo");
     }
   };
 
-  // Filtros
   const filteredCrops = crops.filter(
     (c) =>
       c.name?.toLowerCase().includes(searchTerm.toLowerCase()) &&
@@ -133,7 +122,7 @@ export default function Crops() {
 
   return (
     <div style={{ padding: "20px" }}>
-      {/* Filtros y botón agregar */}
+      {/* Filtros */}
       <div style={{ marginBottom: "20px", display: "flex", gap: "10px", flexWrap: "wrap" }}>
         <Input
           placeholder="Buscar cultivo por nombre"
@@ -203,15 +192,40 @@ export default function Crops() {
         ))}
       </Row>
 
+      {/* Botones de paginación */}
+      <div style={{ textAlign: "center", marginTop: 20, display: "flex", justifyContent: "center", gap: "10px" }}>
+        <Button
+          disabled={prevKeys.length === 0}
+          onClick={() => loadCrops(prevKeys[prevKeys.length - 1], false, true)}
+        >
+          Anterior
+        </Button>
+        <Button disabled={!hasMore} onClick={() => loadCrops(lastKey, true, false)}>
+          Siguiente
+        </Button>
+      </div>
+
       {/* Modal */}
       <Modal title={editingCrop ? "Modificar Cultivo" : "Agregar Cultivo"} open={isModalOpen} onCancel={handleCancel} footer={null}>
         <Form form={form} layout="vertical" onFinish={handleAddOrEditCrop}>
           <Form.Item label="Nombre" name="name" rules={[{ required: true, message: "Selecciona el cultivo" }]}>
-            <Select placeholder="Selecciona cultivo">{cropOptions.map((option) => <Select.Option key={option} value={option}>{option}</Select.Option>)}</Select>
+            <Select placeholder="Selecciona cultivo">
+              {cropOptions.map((option) => (
+                <Select.Option key={option} value={option}>
+                  {option}
+                </Select.Option>
+              ))}
+            </Select>
           </Form.Item>
 
           <Form.Item label="Estado" name="estado" rules={[{ required: true, message: "Selecciona el estado" }]}>
-            <Select placeholder="Selecciona estado">{estadoOptions.map((option) => <Select.Option key={option} value={option}>{option}</Select.Option>)}</Select>
+            <Select placeholder="Selecciona estado">
+              {estadoOptions.map((option) => (
+                <Select.Option key={option} value={option}>
+                  {option}
+                </Select.Option>
+              ))}
+            </Select>
           </Form.Item>
 
           <Form.Item label="Fecha de siembra" name="siembra" rules={[{ required: true, message: "Ingresa la fecha de siembra" }]}>

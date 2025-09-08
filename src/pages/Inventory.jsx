@@ -11,18 +11,32 @@ export default function Inventory() {
   const [editingItem, setEditingItem] = useState(null);
   const [form] = Form.useForm();
 
+  // 🔹 Estados para paginación
+  const [lastKey, setLastKey] = useState(null);
+  const [prevKeys, setPrevKeys] = useState([]);
+
   // 🔹 Cargar inventario al inicio
   useEffect(() => {
     fetchInventory();
   }, []);
 
-  const fetchInventory = async () => {
-    const data = await getInventory();
-    setItems(data);
+  const fetchInventory = async (exclusiveStartKey = null, goingBack = false) => {
+    const data = await getInventory(exclusiveStartKey);
+
+    if (data?.items) {
+      setItems(data.items);
+      setLastKey(data.lastKey || null);
+
+      if (goingBack) {
+        setPrevKeys((prev) => prev.slice(0, -1));
+      } else if (exclusiveStartKey) {
+        setPrevKeys((prev) => [...prev, exclusiveStartKey]);
+      }
+    }
   };
 
   const filteredItems = items.filter(
-    item =>
+    (item) =>
       item.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
       (filterCategory ? item.category === filterCategory : true)
   );
@@ -49,7 +63,7 @@ export default function Inventory() {
       // 🔹 Actualizar
       const res = await updateInventory({ id: editingItem.id, ...values });
       if (res) {
-        setItems(items.map(i => (i.id === editingItem.id ? res : i)));
+        setItems(items.map((i) => (i.id === editingItem.id ? res : i)));
         message.success("Producto modificado correctamente");
       }
     } else {
@@ -66,7 +80,7 @@ export default function Inventory() {
   const handleDeleteItem = async (id) => {
     const res = await deleteInventory(id);
     if (res) {
-      setItems(items.filter(i => i.id !== id));
+      setItems(items.filter((i) => i.id !== id));
       message.success("Producto eliminado correctamente");
     }
   };
@@ -86,7 +100,7 @@ export default function Inventory() {
           placeholder="Filtrar por categoría"
           style={{ width: "180px" }}
           allowClear
-          onChange={value => setFilterCategory(value)}
+          onChange={(value) => setFilterCategory(value)}
         >
           <Select.Option value="Alimento">Alimento</Select.Option>
           <Select.Option value="Medicamento">Medicamento</Select.Option>
@@ -100,7 +114,7 @@ export default function Inventory() {
 
       {/* Cards de inventario */}
       <Row gutter={[16, 16]}>
-        {filteredItems.map(item => (
+        {filteredItems.map((item) => (
           <Col key={item.id} xs={24} sm={12} md={8} lg={6}>
             <Card
               hoverable
@@ -111,7 +125,15 @@ export default function Inventory() {
               <p>Categoría: {item.category}</p>
               <p>Cantidad: {item.quantity} {item.unit}</p>
               <p>Fecha de ingreso: {item.date}</p>
-              <div style={{ position: "absolute", top: "10px", right: "10px", display: "flex", gap: "5px" }}>
+              <div
+                style={{
+                  position: "absolute",
+                  top: "10px",
+                  right: "10px",
+                  display: "flex",
+                  gap: "5px",
+                }}
+              >
                 <Button
                   type="primary"
                   danger
@@ -131,6 +153,20 @@ export default function Inventory() {
         ))}
       </Row>
 
+      {/* Botones de paginación */}
+      <div style={{ marginTop: "20px", textAlign: "center" }}>
+        <Button
+          disabled={prevKeys.length === 0}
+          onClick={() => fetchInventory(prevKeys[prevKeys.length - 1], true)}
+          style={{ marginRight: "10px" }}
+        >
+          Anterior
+        </Button>
+        <Button disabled={!lastKey} onClick={() => fetchInventory(lastKey)}>
+          Siguiente
+        </Button>
+      </div>
+
       {/* Modal para agregar/editar */}
       <Modal
         title={editingItem ? "Modificar Producto" : "Agregar Producto"}
@@ -139,13 +175,25 @@ export default function Inventory() {
         footer={null}
       >
         <Form form={form} layout="vertical" onFinish={handleAddOrEditItem}>
-          <Form.Item label="Nombre" name="name" rules={[{ required: true, message: "Ingresa el nombre" }]}>
+          <Form.Item
+            label="Nombre"
+            name="name"
+            rules={[{ required: true, message: "Ingresa el nombre" }]}
+          >
             <Input />
           </Form.Item>
-          <Form.Item label="Cantidad" name="quantity" rules={[{ required: true, message: "Ingresa la cantidad" }]}>
+          <Form.Item
+            label="Cantidad"
+            name="quantity"
+            rules={[{ required: true, message: "Ingresa la cantidad" }]}
+          >
             <InputNumber min={0} style={{ width: "100%" }} />
           </Form.Item>
-          <Form.Item label="Unidad" name="unit" rules={[{ required: true, message: "Selecciona la unidad" }]}>
+          <Form.Item
+            label="Unidad"
+            name="unit"
+            rules={[{ required: true, message: "Selecciona la unidad" }]}
+          >
             <Select>
               <Select.Option value="kg">kg</Select.Option>
               <Select.Option value="litros">litros</Select.Option>
@@ -153,7 +201,11 @@ export default function Inventory() {
               <Select.Option value="bolsa">bolsa</Select.Option>
             </Select>
           </Form.Item>
-          <Form.Item label="Categoría" name="category" rules={[{ required: true, message: "Selecciona la categoría" }]}>
+          <Form.Item
+            label="Categoría"
+            name="category"
+            rules={[{ required: true, message: "Selecciona la categoría" }]}
+          >
             <Select>
               <Select.Option value="Alimento">Alimento</Select.Option>
               <Select.Option value="Medicamento">Medicamento</Select.Option>
@@ -161,7 +213,11 @@ export default function Inventory() {
               <Select.Option value="Otro">Otro</Select.Option>
             </Select>
           </Form.Item>
-          <Form.Item label="Fecha de ingreso" name="date" rules={[{ required: true, message: "Selecciona la fecha" }]}>
+          <Form.Item
+            label="Fecha de ingreso"
+            name="date"
+            rules={[{ required: true, message: "Selecciona la fecha" }]}
+          >
             <Input type="date" />
           </Form.Item>
           <Form.Item>
