@@ -1,6 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,100..900;1,100..900&family=Outfit:wght@100..900&family=Story+Script&display=swap');
+@import "@aws-amplify/ui-react/styles.css";
 
-*{
+/* Reset básico */
+* {
   margin: 0;
   padding: 0;
   border: none;
@@ -10,49 +12,82 @@
   font-family: 'Poppins', sans-serif;
 }
 
+/* Sidebar principal */
 .sidebar {
-  color: #fff;
-}
-
-.logo{
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  padding: 10px;
-}
-
-.log-icon{
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  border-radius: 50%;
-  background: rgba(88, 25, 159, 0.88);
-}
-
-.menu-bar{
-  height: 88vh;
-  margin-top: 2rem;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 250px;
+  height: 100vh;
+  background-color: #0a1b2e;
   display: flex;
   flex-direction: column;
-  gap: 15px;
-  font-size: 1rem;
-  position: relative;
+  color: #fff;
+  z-index: 1000;
+  padding: 0;
+  transition: width 0.3s ease;
 }
 
-.toggle-theme-btn{
-  position: absolute;
-  bottom: 30px;
-  left: 20px;
+/* Sidebar colapsada */
+.sidebar.collapsed {
+  width: 80px;
+}
+
+/* Logo */
+.logo {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  padding: 15px 0;
+}
+.logo img {
+  max-width: 140px;
+  height: auto;
+  transition: all 0.3s ease;
+}
+.sidebar.collapsed .logo img {
+  max-width: 50px;
 }
 
-.toggle{
-  margin-left: 15px;
+/* Ant Design Menu override */
+.menu-bar {
+  flex: 1;
+  border-right: none ;
+  background: transparent ;
+  padding: 0 ;
+  margin: 0 ;
+}
+
+/* Botón para cambiar tema */
+.toggle-theme-btn {
+  position: absolute; 
+  /* 👉 Cambia estos valores para mover el botón donde quieras */
+  top: 50px;      /* distancia desde arriba */
+  left: 200px;     /* distancia desde la izquierda */
+  /* también puedes usar bottom / right en lugar de top/left */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+
+/* Botón hamburguesa / colapsar */
+.collapse-btn {
+  position: absolute;
+  top: 10px;
+  right: -40px;
+  background: #0a1b2e;
+  color: white;
+  border: none;
+}
+
+/* Responsive */
+@media screen and (max-width: 768px) {
+  .sidebar {
+    width: 200px;
+  }
+  .sidebar.collapsed {
+    width: 60px;
+  }
 }

@@ -19,28 +19,23 @@ export default function Home() {
   useEffect(() => {
     async function fetchData() {
       try {
-        // Animales
-        const animalsRes = await getAnimals(); // obtiene paginación por defecto
+        const animalsRes = await getAnimals();
         setTotalAnimales(animalsRes?.totalCount || 0);
 
-        // Producción
         const productionRes = await getProduction();
         const production = productionRes?.items || [];
         setTotalLeche(production.reduce((sum, p) => sum + Number(p.milk || 0), 0));
         setTotalHuevos(production.reduce((sum, p) => sum + Number(p.eggs || 0), 0));
         setPigsSold(production.reduce((sum, p) => sum + Number(p.pigsSold || 0), 0));
 
-        // Vacunas
         const vaccinesRes = await getVaccines();
         const vaccines = vaccinesRes?.items || [];
         setVacunasPendientes(vaccines.filter(v => v.status?.toLowerCase() === "pendiente").length);
         setVacunasAplicadas(vaccines.filter(v => v.status?.toLowerCase() === "aplicada").length);
 
-        // Cultivos
         const cropsRes = await getCrops();
         setTotalCultivos(cropsRes?.totalCount || 0);
 
-        // Inventario
         const inventoryRes = await getInventory();
         const inventory = inventoryRes?.items || [];
         if (inventory.length) {
@@ -48,7 +43,6 @@ export default function Home() {
           const porcentaje = Math.round((disponibles / inventory.length) * 100);
           setInventarioDisponible(`${porcentaje}%`);
         }
-
       } catch (error) {
         console.error("Error cargando dashboard:", error);
       }
@@ -73,14 +67,15 @@ export default function Home() {
     <div style={{ padding: 24 }}>
       <h1 style={{ marginBottom: 24 }}>🐮🐔🐷 Estadísticas de la Granja</h1>
 
-      <Row gutter={[16, 16]}>
+      <Row gutter={[16, 16]} wrap>
         {cards.map((c) => (
-          <Col key={c.key} xs={24} sm={12} md={6}>
+          <Col key={c.key} xs={24} sm={12} md={6} style={{ display: 'flex' }}>
             <Card
               hoverable
-              bordered
+              variant={selectedCard === c.key ? "outlined" : "default"} // reemplaza bordered
               onClick={() => setSelectedCard(c.key)}
               style={{
+                flex: 1,
                 cursor: "pointer",
                 backgroundColor: selectedCard === c.key ? "#e6f7ff" : "white",
                 border:
@@ -89,7 +84,7 @@ export default function Home() {
                     : "1px solid #f0f0f0",
                 transition: "all 0.3s ease",
               }}
-              bodyStyle={{ transition: "all 0.3s ease" }}
+              styles={{ body: { transition: "all 0.3s ease" } }} // reemplaza bodyStyle
               className="card-custom"
             >
               <Statistic title={c.title} value={c.value} prefix={c.icon} />
@@ -99,7 +94,7 @@ export default function Home() {
       </Row>
 
       {/* Estilos adicionales */}
-      <style jsx>{`
+      <style jsx="true">{`
         .card-custom:hover {
           transform: scale(1.05);
           background-color: #f0f9ff !important;

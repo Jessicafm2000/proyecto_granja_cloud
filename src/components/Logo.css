@@ -2,20 +2,30 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 180px; /* Más alto para que el logo tenga espacio */
+    height: 180px; /* espacio cuando el menú está abierto */
+    transition: all 0.3s ease;
 }
 
 .cloud-icon {
-    width: 180px;   /* Tamaño del logo */
-    height: auto;   /* Mantiene proporción */
+    width: 180px;   /* tamaño del logo normal */
+    height: auto;   /* mantiene proporción */
     animation: float 3s ease-in-out infinite;
-    transition: transform 0.3s, filter 0.3s;
+    transition: transform 0.3s, filter 0.3s, width 0.3s;
+}
+
+/* 🔹 Cuando el menú está colapsado */
+.logo.collapsed {
+    height: 100px; /* reduce el espacio del contenedor */
+}
+
+.logo.collapsed .cloud-icon {
+    width: 80px; /* tamaño reducido del logo */
 }
 
 /* Animación de flotación */
 @keyframes float {
     0% { transform: translateY(0px); }
-    30% { transform: translateY(-15px); } /* Sube 15px */
+    30% { transform: translateY(-15px); } /* sube 15px */
     100% { transform: translateY(0px); }
 }
 

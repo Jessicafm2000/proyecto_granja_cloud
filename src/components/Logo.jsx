@@ -1,19 +1,18 @@
 import React from "react";
-import './Logo.css'; // Asegúrate de tener tus estilos
+import './Logo.css';
 
-const Logo = () => {
-    return (
-        <div className="logo">
-            <div className="logo-icon">
-                {/* Usar el logo desde la carpeta public */}
-                <img 
-                    src="https://d2trfafuwnq9hu.cloudfront.net/logo/granjacloud.png" 
-                    alt="GranjaCloud Logo" 
-                    className="cloud-icon" 
-                />
-            </div>
-        </div>
-    );
+const Logo = ({ collapsed }) => {
+  return (
+    <div className={`logo ${collapsed ? "collapsed" : ""}`}>
+      <div className="logo-icon">
+        <img 
+          src="https://d2trfafuwnq9hu.cloudfront.net/logo/granjacloud.png" 
+          alt="GranjaCloud Logo" 
+          className="cloud-icon" 
+        />
+      </div>
+    </div>
+  );
 };
 
 export default Logo;
