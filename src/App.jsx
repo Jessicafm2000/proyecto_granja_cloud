@@ -44,7 +44,7 @@ function App({ signOut, user }) {
           className='sidebar'
           breakpoint="lg"
           collapsedWidth={80}
-          style={{ padding: 0, margin:0 , left:-10, top: -10}} // elimina espacio extra
+          style={{ padding: 0, margin:0 , left:-10, top: -10}}
         >
           <Logo collapsed={collapsed} />
           <MenuList darkTheme={darkTheme} />
@@ -61,7 +61,7 @@ function App({ signOut, user }) {
               icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             />
             <Button
-              onClick={signOut}
+              onClick={signOut} // viene de main.jsx Authenticator
               style={{ float: "right", marginRight: "2rem", padding: "6px 14px", backgroundColor: "#151870ff", color: "white", border: "none", borderRadius: "6px", cursor: "pointer" }}
             >
               Sign Out
@@ -71,11 +71,11 @@ function App({ signOut, user }) {
           {/* Contenido */}
           <Content
             style={{
-              margin: 0,               // elimina margen externo
-              padding: 24,             // padding interno
+              margin: 0,
+              padding: 24,
               background: colorBgContainer,
               minHeight: '100vh',
-              overflow: 'visible',     // evita que hover de tarjetas se corte
+              overflow: 'visible',
             }}
           >
             <Routes>

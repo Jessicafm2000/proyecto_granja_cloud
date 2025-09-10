@@ -10,10 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@aws-amplify/ui-components": "^1.7.2",
-    "@aws-amplify/ui-react": "^3.6.1",
+    "@aws-amplify/ui": "^5.0.0",
+    "@aws-amplify/ui-react": "^5.0.0",
+    "@aws-amplify/ui-react-core": "^2.1.34",
     "antd": "^5.27.2",
-    "aws-amplify": "^4.3.46",
+    "aws-amplify": "^5.0.1",
     "buffer": "^6.0.3",
     "lucide-react": "^0.542.0",
     "react": "^18.3.1",

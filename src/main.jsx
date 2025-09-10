@@ -3,14 +3,13 @@ import { createRoot } from "react-dom/client";
 import App from "./App.jsx";
 import { Amplify } from "aws-amplify";
 import awsExports from "./aws-exports";
-import {
-  Authenticator,
-} from "@aws-amplify/ui-react";
+import { Authenticator } from "@aws-amplify/ui-react";
 import "@aws-amplify/ui-react/styles.css";
 
+// 🔑 Configura Amplify primero, antes de cualquier JSX
 Amplify.configure(awsExports);
 
-// Opcional: theme personalizado
+// Tema y componentes personalizados para Authenticator
 const formTheme = {
   name: "custom-theme",
   tokens: {
