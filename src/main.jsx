@@ -10,7 +10,7 @@ import "@aws-amplify/ui-react/styles.css";
 
 Amplify.configure(awsExports);
 
-// 👉 Opcional: theme personalizado
+// Opcional: theme personalizado
 const formTheme = {
   name: "custom-theme",
   tokens: {
