@@ -45,11 +45,19 @@ export async function getAnimals(limit = 100, lastKey = null) {
   };
 }
 
+// --- CORRECCIÓN PARA TRAER TODOS LOS ANIMALES ---
 export async function getAllAnimals() {
-  const data = await fetchAPI(ANIMALS_API);
-  if (!data) return [];
-  if (Array.isArray(data)) return data;
-  return data.items || [];
+  let allAnimals = [];
+  let lastKey = null;
+  const limit = 100; // ajustar según necesidad
+
+  do {
+    const { items, lastKey: newLastKey } = await getAnimals(limit, lastKey);
+    allAnimals = allAnimals.concat(items);
+    lastKey = newLastKey;
+  } while (lastKey);
+
+  return allAnimals;
 }
 
 export async function addAnimal({ nombre, tipo, edad }) {

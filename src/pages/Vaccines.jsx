@@ -113,15 +113,23 @@ export default function Vaccination() {
 
   // ---------- Modal ----------
   const openModal = (record = null) => {
+    if (animals.length === 0) {
+      message.warning("Cargando animales, espera un momento...");
+      return;
+    }
+
     setEditingRecord(record);
     setIsModalOpen(true);
+
     if (record) {
       form.setFieldsValue({
         ...record,
         date: dayjs(record.date),
         nextDate: record.nextDate ? dayjs(record.nextDate) : null,
       });
-    } else form.resetFields();
+    } else {
+      form.resetFields();
+    }
   };
 
   const handleCancel = () => {
@@ -232,19 +240,43 @@ export default function Vaccination() {
       <Modal title={editingRecord ? "Modificar Vacuna" : "Agregar Vacuna"} open={isModalOpen} onCancel={handleCancel} footer={null}>
         <Form form={form} layout="vertical" onFinish={handleSave}>
           <Form.Item name="animalId" label="Animal" rules={[{ required: true }]}>
-            <Select placeholder="Selecciona un animal">
-              {animals.map(a => <Option key={a.id} value={a.id}>{a.nombre} ({a.tipo})</Option>)}
+            <Select
+              placeholder="Selecciona un animal"
+              showSearch
+              optionFilterProp="children"
+              virtual={false} // todos los animales visibles
+              style={{ width: "100%" }}
+              dropdownStyle={{ maxHeight: 400, overflow: 'auto' }} // scroll si hay muchos animales
+            >
+              {animals.map(a => (
+                <Option key={a.id} value={a.id}>
+                  {a.nombre} ({a.tipo})
+                </Option>
+              ))}
             </Select>
           </Form.Item>
           <Form.Item name="vaccine" label="Vacuna" rules={[{ required: true }]}>
-            <Select placeholder="Selecciona una vacuna">{vaccineOptions.map(v => <Option key={v} value={v}>{v}</Option>)}</Select>
+            <Select placeholder="Selecciona una vacuna">
+              {vaccineOptions.map(v => <Option key={v} value={v}>{v}</Option>)}
+            </Select>
           </Form.Item>
-          <Form.Item name="date" label="Fecha de aplicación" rules={[{ required: true }]}><DatePicker style={{ width: "100%" }} /></Form.Item>
-          <Form.Item name="nextDate" label="Próxima dosis"><DatePicker style={{ width: "100%" }} /></Form.Item>
+          <Form.Item name="date" label="Fecha de aplicación" rules={[{ required: true }]}>
+            <DatePicker style={{ width: "100%" }} />
+          </Form.Item>
+          <Form.Item name="nextDate" label="Próxima dosis">
+            <DatePicker style={{ width: "100%" }} />
+          </Form.Item>
           <Form.Item name="status" label="Estado" rules={[{ required: true }]}>
-            <Select placeholder="Selecciona el estado"><Option value="Aplicada">Aplicada</Option><Option value="Pendiente">Pendiente</Option></Select>
+            <Select placeholder="Selecciona el estado">
+              <Option value="Aplicada">Aplicada</Option>
+              <Option value="Pendiente">Pendiente</Option>
+            </Select>
           </Form.Item>
-          <Form.Item><Button type="primary" htmlType="submit" style={{ width: "100%" }}>{editingRecord ? "Modificar" : "Agregar"}</Button></Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit" style={{ width: "100%" }}>
+              {editingRecord ? "Modificar" : "Agregar"}
+            </Button>
+          </Form.Item>
         </Form>
       </Modal>
     </div>
