@@ -12,7 +12,7 @@ export default function Inventory() {
   const [form] = Form.useForm();
 
   // 🔹 PAGINACIÓN ESTILO ANIMALS
-  const limit = 2;
+  const limit = 12;
   const [historyKeys, setHistoryKeys] = useState([null]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [lastKey, setLastKey] = useState(null);

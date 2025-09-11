@@ -7,7 +7,7 @@ import dayjs from "dayjs";
 const { Option } = Select;
 
 export default function Vaccination() {
-  const limit = 1; // vacunas por página
+  const limit = 12; // vacunas por página
   const vaccineOptions = ["Fiebre Aftosa", "Brucelosis", "Gripe Aviar", "Peste Porcina"];
 
   const animalImages = {
