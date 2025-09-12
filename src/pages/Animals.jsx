@@ -11,6 +11,13 @@ export default function Animals() {
     Vaca: "https://d2trfafuwnq9hu.cloudfront.net/animals/vaca.png",
     Gallina: "https://d2trfafuwnq9hu.cloudfront.net/animals/gallina.png",
     Cerdo: "https://d2trfafuwnq9hu.cloudfront.net/animals/cerdo.png",
+    Burro: "https://d2trfafuwnq9hu.cloudfront.net/animals/burro.png",
+    Caballo: "https://d2trfafuwnq9hu.cloudfront.net/animals/caballo.png",
+    Cabra: "https://d2trfafuwnq9hu.cloudfront.net/animals/cabra.png",
+    Conejo: "https://d2trfafuwnq9hu.cloudfront.net/animals/conejo.png",
+    Cuy: "https://d2trfafuwnq9hu.cloudfront.net/animals/cuy.png",
+    Oveja: "https://d2trfafuwnq9hu.cloudfront.net/animals/oveja.png",
+    Pato: "https://d2trfafuwnq9hu.cloudfront.net/animals/pato.png",
     Default: "./animals/default.png",
   };
 

@@ -8,12 +8,19 @@ const { Option } = Select;
 
 export default function Vaccination() {
   const limit = 12; // vacunas por página
-  const vaccineOptions = ["Fiebre Aftosa", "Brucelosis", "Gripe Aviar", "Peste Porcina"];
+  const vaccineOptions = ["Fiebre Aftosa", "Brucelosis", "Gripe Aviar", "Peste Porcina","Encefalomielitis Equina (Caballos/Burros)", "Mixomatosis (Conejo)", "Enfermedad Hemorrágica Viral del Conejo (Conejo)"];
 
   const animalImages = {
     Vaca: "https://d2trfafuwnq9hu.cloudfront.net/animals/vaca.png",
     Gallina: "https://d2trfafuwnq9hu.cloudfront.net/animals/gallina.png",
     Cerdo: "https://d2trfafuwnq9hu.cloudfront.net/animals/cerdo.png",
+    Burro: "https://d2trfafuwnq9hu.cloudfront.net/animals/burro.png",
+    Caballo: "https://d2trfafuwnq9hu.cloudfront.net/animals/caballo.png",
+    Cabra: "https://d2trfafuwnq9hu.cloudfront.net/animals/cabra.png",
+    Conejo: "https://d2trfafuwnq9hu.cloudfront.net/animals/conejo.png",
+    Cuy: "https://d2trfafuwnq9hu.cloudfront.net/animals/cuy.png",
+    Oveja: "https://d2trfafuwnq9hu.cloudfront.net/animals/oveja.png",
+    Pato: "https://d2trfafuwnq9hu.cloudfront.net/animals/pato.png",
     Default: "https://d2trfafuwnq9hu.cloudfront.net/animals/default.png",
   };
 
@@ -185,7 +192,7 @@ export default function Vaccination() {
           prefix={<SearchOutlined />}
         />
         <Select placeholder="Filtrar por tipo de animal" allowClear style={{ width: 180 }} onChange={setFilterAnimalType}>
-          {["Vaca", "Gallina", "Cerdo"].map(type => <Option key={type} value={type}>{type}</Option>)}
+          {["Vaca", "Gallina", "Cerdo", "Burro", "Caballo", "Cabra", "Conejo", "Cuy", "Oveja", "Pato"].map(type => <Option key={type} value={type}>{type}</Option>)}
         </Select>
         <Select placeholder="Filtrar por estado" allowClear style={{ width: 180 }} onChange={setFilterStatus}>
           <Option value="Aplicada">Aplicada</Option>
