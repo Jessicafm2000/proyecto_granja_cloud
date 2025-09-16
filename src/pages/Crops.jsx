@@ -9,11 +9,17 @@ const cropImages = {
   Trigo: "https://d2trfafuwnq9hu.cloudfront.net/crops/trigo.png",
   Tomate: "https://d2trfafuwnq9hu.cloudfront.net/crops/tomate.png",
   Papa: "https://d2trfafuwnq9hu.cloudfront.net/crops/papa.png",
+  Ajo: "https://d2trfafuwnq9hu.cloudfront.net/crops/ajo.png",
+  Coliflor: "https://d2trfafuwnq9hu.cloudfront.net/crops/coliflor.png",
+  Fresa: "https://d2trfafuwnq9hu.cloudfront.net/crops/fresa.png",
+  Remolacha: "https://d2trfafuwnq9hu.cloudfront.net/crops/remolacha.png",
+  Repollo: "https://d2trfafuwnq9hu.cloudfront.net/crops/repollo.png",
+  Zanahoria: "https://d2trfafuwnq9hu.cloudfront.net/crops/zanahoria.png",
   Default: "./crops/default.png",
 };
 
 export default function Crops() {
-  const cropOptions = ["Maíz", "Trigo", "Tomate", "Papa"];
+  const cropOptions = ["Maíz", "Trigo", "Tomate", "Papa", "Ajo", "Coliflor", "Fresa", "Remolacha", "Repollo", "Zanahoria"];
   const estadoOptions = ["Semilla", "Creciendo", "Cosecha"];
   const limit = 12; // cultivos por página
 
